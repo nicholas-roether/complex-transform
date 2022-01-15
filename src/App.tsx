@@ -13,7 +13,8 @@ const App = () => (
 			callback={(gl, width, height) => {
 				const renderer = new WebGLRenderer(gl, width, height);
 				renderer.viewport.scaleBy(10);
-				renderer.start(fsSource);
+				renderer.load(fsSource);
+				renderer.draw();
 			}}
 		/>
 	</>

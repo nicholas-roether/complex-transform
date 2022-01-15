@@ -7,11 +7,13 @@ type ShaderList = {
 }[];
 
 class WebGLRenderer {
-	private readonly gl: WebGLRenderingContext;
 	public readonly width: number;
 	public readonly height: number;
 	public readonly viewport: Viewport;
-	public running = false;
+
+	private readonly gl: WebGLRenderingContext;
+	private program: WebGLProgram | null = null;
+	private vertexBuffer: WebGLBuffer | null = null;
 
 	constructor(gl: WebGLRenderingContext, width: number, height: number) {
 		this.gl = gl;
@@ -20,8 +22,8 @@ class WebGLRenderer {
 		this.viewport = new Viewport(width, height);
 	}
 
-	public start(fragmentShader: string) {
-		const program = this.createProgram([
+	public load(fragmentShader: string) {
+		this.loadProgram([
 			{
 				type: this.gl.VERTEX_SHADER,
 				source: vsSource
@@ -31,43 +33,48 @@ class WebGLRenderer {
 				source: fragmentShader
 			}
 		]);
-		if (!program) throw new Error("Failed to compile shader program.");
-		const buffer = this.initVertexBuffer();
-		if (!buffer) throw new Error("Failed to initialize vertex buffer.");
-
-		// TODO loop etc
-		this.draw(program, buffer);
+		if (!this.program) throw new Error("Failed to compile shader program.");
+		this.initVertexBuffer();
+		if (!this.vertexBuffer)
+			throw new Error("Failed to initialize vertex buffer.");
 	}
 
-	public stop() {
-		this.running = false;
+	public unload() {
+		this.unloadProgram();
+		this.resetVertexBuffer();
 	}
 
-	private draw(program: WebGLProgram, vertexBuffer: WebGLBuffer) {
+	public draw() {
+		if (!this.program || !this.vertexBuffer)
+			throw new Error(
+				"No program loaded; use load() to load a shader program before calling draw()."
+			);
+
 		this.gl.viewport(0, 0, this.width, this.height);
 		this.gl.clearColor(0, 0, 0, 1);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-		this.gl.useProgram(program);
-
 		const uViewportTransform = this.gl.getUniformLocation(
-			program,
+			this.program,
 			"uViewportTransform"
 		);
 		const uViewportTranslation = this.gl.getUniformLocation(
-			program,
+			this.program,
 			"uViewportTranslation"
 		);
-		const uAspectRatio = this.gl.getUniformLocation(program, "uAspectRatio");
+		const uAspectRatio = this.gl.getUniformLocation(
+			this.program,
+			"uAspectRatio"
+		);
 
 		const transform = this.viewport.getAffineTransform();
 		this.gl.uniformMatrix2fv(uViewportTransform, false, transform.matrix);
 		this.gl.uniform2fv(uViewportTranslation, transform.translation);
 		this.gl.uniform1f(uAspectRatio, this.width / this.height);
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 
 		const aVertexPosition = this.gl.getAttribLocation(
-			program,
+			this.program,
 			"aVertexPosition"
 		);
 		this.gl.enableVertexAttribArray(aVertexPosition);
@@ -75,7 +82,7 @@ class WebGLRenderer {
 		this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 	}
 
-	private createProgram(shaders: ShaderList): WebGLProgram | null {
+	private loadProgram(shaders: ShaderList) {
 		const program = this.gl.createProgram();
 		if (!program) {
 			console.error("Failed to create WebGL shader program.");
@@ -98,10 +105,16 @@ class WebGLRenderer {
 			return null;
 		}
 
-		return program;
+		this.gl.useProgram(program);
+		this.program = program;
 	}
 
-	private initVertexBuffer(): WebGLBuffer | null {
+	private unloadProgram() {
+		this.gl.useProgram(null);
+		this.program = null;
+	}
+
+	private initVertexBuffer() {
 		const vertices = new Float32Array([
 			// eslint-disable-next-line prettier/prettier
 			-1,  1,   1,  1,   -1, -1,
@@ -111,7 +124,12 @@ class WebGLRenderer {
 		const vertexBuffer = this.gl.createBuffer();
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-		return vertexBuffer;
+		this.vertexBuffer = vertexBuffer;
+	}
+
+	private resetVertexBuffer() {
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+		this.vertexBuffer = null;
 	}
 
 	private loadShader(type: number, source: string): WebGLShader | null {
