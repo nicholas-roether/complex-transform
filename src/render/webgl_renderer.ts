@@ -14,6 +14,7 @@ class WebGLRenderer {
 	private readonly gl: WebGLRenderingContext;
 	private program: WebGLProgram | null = null;
 	private vertexBuffer: WebGLBuffer | null = null;
+	private vertexBufferSize: number = 0;
 
 	constructor(gl: WebGLRenderingContext, width: number, height: number) {
 		this.gl = gl;
@@ -44,7 +45,7 @@ class WebGLRenderer {
 		this.resetVertexBuffer();
 	}
 
-	public draw() {
+	public draw(time = 0) {
 		if (!this.program || !this.vertexBuffer)
 			throw new Error(
 				"No program loaded; use load() to load a shader program before calling draw()."
@@ -58,6 +59,10 @@ class WebGLRenderer {
 			this.program,
 			"uViewportTransform"
 		);
+		const uViewportTransformInverse = this.gl.getUniformLocation(
+			this.program,
+			"uViewportTransformInverse"
+		);
 		const uViewportTranslation = this.gl.getUniformLocation(
 			this.program,
 			"uViewportTranslation"
@@ -66,11 +71,19 @@ class WebGLRenderer {
 			this.program,
 			"uAspectRatio"
 		);
+		const uTime = this.gl.getUniformLocation(this.program, "uTime");
 
 		const transform = this.viewport.getAffineTransform();
+		const inverseTransform = this.viewport.getInverseAffineTransform().matrix;
 		this.gl.uniformMatrix2fv(uViewportTransform, false, transform.matrix);
+		this.gl.uniformMatrix2fv(
+			uViewportTransformInverse,
+			false,
+			inverseTransform
+		);
 		this.gl.uniform2fv(uViewportTranslation, transform.translation);
 		this.gl.uniform1f(uAspectRatio, this.width / this.height);
+		this.gl.uniform1f(uTime, time);
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 
 		const aVertexPosition = this.gl.getAttribLocation(
@@ -79,7 +92,13 @@ class WebGLRenderer {
 		);
 		this.gl.enableVertexAttribArray(aVertexPosition);
 		this.gl.vertexAttribPointer(aVertexPosition, 2, this.gl.FLOAT, false, 0, 0);
-		this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+		this.gl.drawArrays(this.gl.TRIANGLES, 0, this.vertexBufferSize);
+
+		const lastTime = Date.now();
+		requestAnimationFrame(() => {
+			const delta = Date.now() - lastTime;
+			this.draw(time + delta);
+		});
 	}
 
 	private loadProgram(shaders: ShaderList) {
@@ -114,22 +133,53 @@ class WebGLRenderer {
 		this.program = null;
 	}
 
-	private initVertexBuffer() {
-		const vertices = new Float32Array([
+	private generateVertexSquare(x: number, y: number, size: number): number[] {
+		return [
 			// eslint-disable-next-line prettier/prettier
-			-1,  1,   1,  1,   -1, -1,
-			-1, -1,   1,  1,    1, -1
-		]);
+			x, y,  x + size, y,         x + size, y + size,
+			// eslint-disable-next-line prettier/prettier
+			x, y,  x + size, y + size,  x,        y + size
+		];
+	}
+
+	private generateVertexTiling(depth: number): Float32Array {
+		const vertices: number[] = [];
+
+		const size = 2 / depth;
+		const indexToCoord = (i: number) => size * i - 1;
+		for (let i = 0; i < depth; i++) {
+			for (let j = 0; j < depth; j++) {
+				const x = indexToCoord(i);
+				const y = indexToCoord(j);
+				vertices.push(...this.generateVertexSquare(x, y, size));
+			}
+		}
+
+		return new Float32Array(vertices);
+	}
+
+	private initVertexBuffer() {
+		// const vertices = new Float32Array([
+		// 	// eslint-disable-next-line prettier/prettier
+		// 	-1,  1,   1,  1,   -1, -1,
+		// 	-1, -1,   1,  1,    1, -1
+		// ]);
+
+		const vertices = this.generateVertexTiling(500);
+
+		console.log(vertices);
 
 		const vertexBuffer = this.gl.createBuffer();
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
 		this.vertexBuffer = vertexBuffer;
+		this.vertexBufferSize = vertices.length / 2;
 	}
 
 	private resetVertexBuffer() {
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 		this.vertexBuffer = null;
+		this.vertexBufferSize = 0;
 	}
 
 	private loadShader(type: number, source: string): WebGLShader | null {

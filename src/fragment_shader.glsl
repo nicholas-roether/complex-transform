@@ -7,8 +7,6 @@ uniform vec2 uViewportSize;
 in vec2 vFragCoord;
 out vec4 oFragColor;
 
-
-
 vec2 transformation(vec2 pos) {
 	return mat2(1.0, 0.5, 0.5, 1.0) * pos;
 }

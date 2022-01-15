@@ -36,6 +36,13 @@ class Viewport {
 		};
 	}
 
+	getInverseAffineTransform(): AffineTransform2D {
+		return {
+			matrix: [1 / this.scale, 0, 0, this.aspectRatio / this.scale],
+			translation: [-this.translation[0], -this.translation[1]]
+		};
+	}
+
 	public get aspectRatio() {
 		return this.width / this.height;
 	}
