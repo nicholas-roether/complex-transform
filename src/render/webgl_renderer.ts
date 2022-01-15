@@ -6,7 +6,7 @@ type ShaderList = {
 	source: string;
 }[];
 
-class Renderer {
+class WebGLRenderer {
 	private readonly gl: WebGLRenderingContext;
 	public readonly width: number;
 	public readonly height: number;
@@ -137,4 +137,4 @@ class Renderer {
 	}
 }
 
-export default Renderer;
+export default WebGLRenderer;

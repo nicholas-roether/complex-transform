@@ -31,7 +31,7 @@ class Viewport {
 
 	getAffineTransform(): AffineTransform2D {
 		return {
-			matrix: [this.scale, 0, 0, -this.scale / this.aspectRatio],
+			matrix: [this.scale, 0, 0, this.scale / this.aspectRatio],
 			translation: this.translation
 		};
 	}
