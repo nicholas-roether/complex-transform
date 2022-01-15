@@ -10,13 +10,14 @@ class Renderer {
 	private readonly gl: WebGLRenderingContext;
 	public readonly width: number;
 	public readonly height: number;
-	public readonly viewport: Viewport = new Viewport();
+	public readonly viewport: Viewport;
 	public running = false;
 
 	constructor(gl: WebGLRenderingContext, width: number, height: number) {
 		this.gl = gl;
 		this.width = width;
 		this.height = height;
+		this.viewport = new Viewport(width, height);
 	}
 
 	public start(fragmentShader: string) {
@@ -57,12 +58,12 @@ class Renderer {
 			program,
 			"uViewportTranslation"
 		);
-		const uViewportSize = this.gl.getUniformLocation(program, "uViewportSize");
+		const uAspectRatio = this.gl.getUniformLocation(program, "uAspectRatio");
 
 		const transform = this.viewport.getAffineTransform();
 		this.gl.uniformMatrix2fv(uViewportTransform, false, transform.matrix);
 		this.gl.uniform2fv(uViewportTranslation, transform.translation);
-		this.gl.uniform2fv(uViewportSize, [this.width, this.height]);
+		this.gl.uniform1f(uAspectRatio, this.width / this.height);
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
 
 		const aVertexPosition = this.gl.getAttribLocation(
@@ -103,8 +104,8 @@ class Renderer {
 	private initVertexBuffer(): WebGLBuffer | null {
 		const vertices = new Float32Array([
 			// eslint-disable-next-line prettier/prettier
-			-1,  1,   1,  1,   1, -1,
-			-1,  1,   1, -1,  -1, -1
+			-1,  1,   1,  1,   -1, -1,
+			-1, -1,   1,  1,    1, -1
 		]);
 
 		const vertexBuffer = this.gl.createBuffer();

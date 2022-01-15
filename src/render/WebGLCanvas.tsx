@@ -11,10 +11,10 @@ const WebGLCanvas = ({ width, height, callback }: WebGLCanvasProps) => {
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return console.error("WebGL canvas not found");
-		const gl = canvasRef.current.getContext("webgl");
+		const gl = canvasRef.current.getContext("webgl2");
 		if (!gl) {
 			alert(
-				"WebGL initialization failed. Make sure that your device and your browser support WebGL."
+				"WebGL initialization failed. Make sure that your device and your browser support WebGL 2.0."
 			);
 			return;
 		}

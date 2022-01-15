@@ -1,9 +1,18 @@
-#ifdef GL_ES
+#version 300 es
+
 precision mediump float;
-#endif
 
 uniform vec2 uViewportSize;
 
+in vec2 vFragCoord;
+out vec4 oFragColor;
+
 void main() {
-	gl_FragColor = vec4(0.3, gl_FragCoord.x / uViewportSize.x, gl_FragCoord.y / uViewportSize.y, 1.0);
+	int x = abs(int(vFragCoord.x) % 2);
+	int y = abs(int(vFragCoord.y) % 2);
+
+	int color = x ^ y;
+
+	if (color == 1) oFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	else oFragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }

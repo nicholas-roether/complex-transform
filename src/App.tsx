@@ -12,7 +12,7 @@ const App = () => (
 			height={480}
 			callback={(gl, width, height) => {
 				const renderer = new Renderer(gl, width, height);
-				renderer.viewport.scaleBy(100);
+				renderer.viewport.scaleBy(10);
 				renderer.start(fsSource);
 			}}
 		/>

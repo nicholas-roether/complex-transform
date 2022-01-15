@@ -1,12 +1,15 @@
 import AffineTransform2D from "./affine_transform";
 
 class Viewport {
-	public rotation: number = 0;
 	public translation: [number, number] = [0, 0];
 	public scale: number = 1;
 
-	rotate(amount: number) {
-		this.rotation = (this.rotation + amount) % (2 * Math.PI);
+	public readonly width: number;
+	public readonly height: number;
+
+	constructor(width: number, height: number) {
+		this.width = width;
+		this.height = height;
 	}
 
 	translateX(dx: number) {
@@ -27,16 +30,14 @@ class Viewport {
 	}
 
 	getAffineTransform(): AffineTransform2D {
-		const a = this.scale * Math.cos(this.rotation);
-		const b = this.scale * Math.sin(this.rotation);
 		return {
-			// eslint-disable-next-line prettier/prettier
-			matrix: [
-				a, -b,
-				b,  a
-			],
+			matrix: [this.scale, 0, 0, -this.scale / this.aspectRatio],
 			translation: this.translation
 		};
+	}
+
+	public get aspectRatio() {
+		return this.width / this.height;
 	}
 }
 
