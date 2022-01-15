@@ -9,12 +9,12 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "yarn run jest --runInBand",
-    "eject": "react-scripts eject"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "yarn run jest --runInBand"
   },
   "dependencies": {
+    "@craco/craco": "^6.4.3",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@mui/icons-material": "^5.2.5",

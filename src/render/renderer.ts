@@ -1,4 +1,5 @@
 import Viewport from "./viewport";
+import vsSource from "./vertex_shader.glsl";
 
 type ShaderList = {
 	type: number;
@@ -18,8 +19,17 @@ class Renderer {
 		this.height = height;
 	}
 
-	public start(shaders: ShaderList) {
-		const program = this.createProgram(shaders);
+	public start(fragmentShader: string) {
+		const program = this.createProgram([
+			{
+				type: this.gl.VERTEX_SHADER,
+				source: vsSource
+			},
+			{
+				type: this.gl.FRAGMENT_SHADER,
+				source: fragmentShader
+			}
+		]);
 		if (!program) throw new Error("Failed to compile shader program.");
 		const buffer = this.initVertexBuffer();
 		if (!buffer) throw new Error("Failed to initialize vertex buffer.");
