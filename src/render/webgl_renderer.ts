@@ -67,6 +67,10 @@ class WebGLRenderer {
 			this.program,
 			"uViewportTranslation"
 		);
+		const uViewportSize = this.gl.getUniformLocation(
+			this.program,
+			"uViewportSize"
+		);
 		const uAspectRatio = this.gl.getUniformLocation(
 			this.program,
 			"uAspectRatio"
@@ -82,6 +86,7 @@ class WebGLRenderer {
 			inverseTransform
 		);
 		this.gl.uniform2fv(uViewportTranslation, transform.translation);
+		this.gl.uniform2fv(uViewportSize, [this.width, this.height]);
 		this.gl.uniform1f(uAspectRatio, this.width / this.height);
 		this.gl.uniform1f(uTime, time);
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -125,11 +130,15 @@ class WebGLRenderer {
 		}
 
 		this.gl.useProgram(program);
+		this.gl.enable(this.gl.BLEND);
+		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+
 		this.program = program;
 	}
 
 	private unloadProgram() {
 		this.gl.useProgram(null);
+		this.gl.disable(this.gl.BLEND);
 		this.program = null;
 	}
 
