@@ -10,14 +10,14 @@ out vec2 vFragCoord;
 
 
 vec2 transform(vec2 pos) {
+	// if (abs(pos.x - 0.0) < 0.5 && abs(pos.y - 0.0) < 0.5) return vec2(0.0, 0.0);
 	// return 1.0 / (pos.x * pos.x + pos.y * pos.y) * vec2(pos.x, -pos.y);
 	// return vec2(pos.x * pos.x - pos.y * pos.y, 2.0 * pos.x * pos.y);
 	return exp(pos.x) * vec2(cos(pos.y), sin(pos.y));
 }
 
 vec2 interpolatedTransform(vec2 pos) {
-	float t = uTime / 5000.0;
-	if (t > 1.0) t = 1.0;
+	float t = clamp(uTime / 1000.0, 0.0, 1.0);
 	return pos + t * (transform(pos) - pos);
 }
 
