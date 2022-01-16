@@ -1,15 +1,18 @@
-import AffineTransform2D from "./affine_transform";
-
 class Viewport {
+	public readonly canvas: HTMLCanvasElement;
 	public translation: [number, number] = [0, 0];
 	public scale: number = 1;
 
-	public readonly width: number;
-	public readonly height: number;
+	constructor(canvas: HTMLCanvasElement) {
+		this.canvas = canvas;
+	}
 
-	constructor(width: number, height: number) {
-		this.width = width;
-		this.height = height;
+	public get width(): number {
+		return this.canvas.width;
+	}
+
+	public get height(): number {
+		return this.canvas.height;
 	}
 
 	translateX(dx: number) {
@@ -29,18 +32,16 @@ class Viewport {
 		this.scale *= factor;
 	}
 
-	getAffineTransform(): AffineTransform2D {
-		return {
-			matrix: [this.scale, 0, 0, this.scale / this.aspectRatio],
-			translation: this.translation
-		};
+	toViewportSpace(
+		pos: [nomalizedX: number, normalizedY: number]
+	): [viewportX: number, viewportY: number] {
+		return [pos[0], pos[1] / this.aspectRatio];
 	}
 
-	getInverseAffineTransform(): AffineTransform2D {
-		return {
-			matrix: [1 / this.scale, 0, 0, this.aspectRatio / this.scale],
-			translation: [-this.translation[0], -this.translation[1]]
-		};
+	toNormalized(
+		pos: [viewportX: number, viewportY: number]
+	): [normalizedX: number, normalizedY: number] {
+		return [pos[0], pos[1] * this.aspectRatio];
 	}
 
 	public get aspectRatio() {
