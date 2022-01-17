@@ -1,5 +1,6 @@
 {
 	"useTabs": true,
 	"trailingComma": "none",
-	"bracketSpacing": true
+	"bracketSpacing": true,
+	"endOfLine": "crlf"
 }
