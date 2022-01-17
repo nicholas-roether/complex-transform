@@ -41,6 +41,18 @@ interface Uniform {
 	setter: (location: WebGLUniformLocation | null) => void;
 }
 
+interface AttributeInfo {
+	name: string;
+	size: number;
+	type: number;
+}
+
+interface Attribute {
+	size: number;
+	type: number;
+	buffer: WebGLBuffer;
+}
+
 abstract class Renderer {
 	public readonly canvas: HTMLCanvasElement;
 	public readonly viewport: Viewport;
@@ -48,6 +60,7 @@ abstract class Renderer {
 	// protected readonly ctx: CanvasRenderingContext2D;
 
 	private readonly uniforms: Uniform[] = [];
+	private readonly attributeMap: Map<string, Attribute> = new Map();
 
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
@@ -81,13 +94,43 @@ abstract class Renderer {
 
 	protected abstract draw(): void;
 
-	protected setVertices(program: WebGLProgram) {
-		const aVertexPosition = this.gl.getAttribLocation(
-			program,
-			"aVertexPosition"
-		);
-		this.gl.enableVertexAttribArray(aVertexPosition);
-		this.gl.vertexAttribPointer(aVertexPosition, 2, this.gl.FLOAT, false, 0, 0);
+	protected pushAttribute(attributeInfo: AttributeInfo) {
+		const attribute = {
+			...attributeInfo,
+			buffer: this.createBuffer()
+		};
+		this.attributeMap.set(attributeInfo.name, attribute);
+	}
+
+	protected setAttributeBuffer(
+		name: string,
+		data: BufferSource,
+		usage: number
+	) {
+		const attribute = this.attributeMap.get(name);
+		if (!attribute) return;
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, attribute.buffer);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, data, usage);
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+	}
+
+	protected setVertexAttributes(program: WebGLProgram) {
+		this.attributeMap.forEach(({ size, type, buffer }, name) => {
+			const location = this.gl.getAttribLocation(program, name);
+			if (location === -1) return;
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+			this.gl.enableVertexAttribArray(location);
+			this.gl.vertexAttribPointer(location, size, type, false, 0, 0);
+		});
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+	}
+
+	protected resetVertexAttributes(program: WebGLProgram) {
+		for (const name of this.attributeMap.keys()) {
+			const location = this.gl.getAttribLocation(program, name);
+			if (location === -1) continue;
+			this.gl.disableVertexAttribArray(location);
+		}
 	}
 
 	protected clearScreen() {
@@ -133,8 +176,9 @@ abstract class Renderer {
 		return program;
 	}
 
-	protected setUniforms(program: WebGLProgram) {
+	protected setUniforms(program: WebGLProgram, ...names: string[]) {
 		for (const uniform of this.uniforms) {
+			if (names.length > 0 && !names.includes(uniform.name)) continue;
 			const location = this.gl.getUniformLocation(program, uniform.name);
 			uniform.setter(location);
 		}

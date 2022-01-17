@@ -6,7 +6,7 @@ class TransformRenderer extends Renderer {
 	private readonly lineShaderProgram: WebGLProgram;
 	private mainGridLines: Float32Array[];
 	private subGridLines: Float32Array[];
-	private subLine: boolean = false;
+	private subline: boolean = false;
 
 	// TEMPORARY
 	private time: number = 0;
@@ -24,17 +24,19 @@ class TransformRenderer extends Renderer {
 		});
 		this.pushUniform({
 			name: "uSubline",
-			setter: (location) => this.gl.uniform1ui(location, this.subLine ? 1 : 0)
+			setter: (location) => this.gl.uniform1ui(location, this.subline ? 1 : 0)
+		});
+		this.pushAttribute({
+			name: "aVertexPosition",
+			type: this.gl.FLOAT,
+			size: 2
 		});
 		this.mainGridLines = this.generateSubGrid(50, 50, 3000);
 		this.subGridLines = this.generateMainGrid(50, 50, 3000);
 	}
 
 	protected draw(): void {
-		const vertexBuffer = this.createBuffer();
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
 		this.drawGrid();
-		this.gl.deleteBuffer(vertexBuffer);
 
 		// TEMPORARY
 		if (this.time === 1) return;
@@ -52,7 +54,7 @@ class TransformRenderer extends Renderer {
 		else nextFrame();
 	}
 
-	protected generateSubGrid(
+	private generateSubGrid(
 		width: number,
 		height: number,
 		numSegments: number
@@ -77,7 +79,7 @@ class TransformRenderer extends Renderer {
 		return lines;
 	}
 
-	protected generateMainGrid(
+	private generateMainGrid(
 		width: number,
 		height: number,
 		numSegments: number
@@ -101,26 +103,28 @@ class TransformRenderer extends Renderer {
 
 	protected drawGrid() {
 		this.gl.useProgram(this.lineShaderProgram);
-		this.subLine = true;
+		this.subline = true;
 		this.setUniforms(this.lineShaderProgram);
+
 		for (const line of this.mainGridLines) {
-			this.gl.bufferData(this.gl.ARRAY_BUFFER, line, this.gl.STREAM_DRAW);
-			this.setVertices(this.lineShaderProgram);
+			this.setAttributeBuffer("aVertexPosition", line, this.gl.STREAM_DRAW);
+			this.setVertexAttributes(this.lineShaderProgram);
 			this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.length / 2);
 		}
 
-		this.subLine = false;
-		this.setUniforms(this.lineShaderProgram);
+		this.subline = false;
+		this.setUniforms(this.lineShaderProgram, "uSubline");
 		for (const line of this.subGridLines) {
-			this.gl.bufferData(this.gl.ARRAY_BUFFER, line, this.gl.STREAM_DRAW);
-			this.setVertices(this.lineShaderProgram);
+			this.setAttributeBuffer("aVertexPosition", line, this.gl.STREAM_DRAW);
+			this.setVertexAttributes(this.lineShaderProgram);
 			this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.length / 2);
 		}
 
+		this.resetVertexAttributes(this.lineShaderProgram);
 		this.gl.useProgram(null);
 	}
 
-	protected generateSegmentedLine(
+	private generateSegmentedLine(
 		start: [x: number, y: number],
 		end: [x: number, y: number],
 		numSegments: number

@@ -24,7 +24,7 @@ const WebGLCanvas = ({ width, height, callback }: WebGLCanvasProps) => {
 		// gl.clear(gl.COLOR_BUFFER_BIT);
 		// callback(gl, canvasRef.current.width, canvasRef.current.height);
 		const transformRenderer = new TransformRenderer(canvasRef.current);
-		transformRenderer.viewport.scaleBy(0.6);
+		transformRenderer.viewport.scaleBy(0.1);
 		transformRenderer.render();
 	}, [callback, canvasRef]);
 
