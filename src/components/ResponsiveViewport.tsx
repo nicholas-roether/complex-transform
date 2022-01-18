@@ -12,7 +12,7 @@ const ResponsiveViewport = ({
 	const onWheel = useCallback(
 		(evt: WheelEvent) => {
 			evt.preventDefault();
-			viewport.scaleBy(Math.pow(2, evt.deltaY * -0.0005));
+			viewport.scaleBy(Math.pow(2, evt.deltaY * -0.0008));
 		},
 		[viewport]
 	);
