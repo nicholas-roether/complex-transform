@@ -11,7 +11,8 @@
 	"scripts": {
 		"start": "craco start",
 		"build": "craco build",
-		"test": "yarn run jest --runInBand"
+		"test": "yarn run jest --runInBand",
+		"format": "prettier --write .\\"
 	},
 	"dependencies": {
 		"@craco/craco": "^6.4.3",
