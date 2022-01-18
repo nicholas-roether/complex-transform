@@ -1,217 +1,198 @@
-// import Viewport from "./viewport";
-// import vsSource from "./vertex_shader.glsl";
+import Viewport from "./viewport";
 
-// type ShaderList = {
-// 	type: number;
-// 	source: string;
-// }[];
+type ShaderSourceList = {
+	type: number;
+	source: string;
+}[];
 
-// class WebGLRenderer {
-// 	public readonly width: number;
-// 	public readonly height: number;
-// 	public readonly viewport: Viewport;
+function getShaderTypeName(type: number) {
+	for (const name in WebGL2RenderingContext) {
+		if (
+			(WebGL2RenderingContext as unknown as Record<string, unknown>)[name] ===
+			type
+		)
+			return name;
+	}
+	return "unknown";
+}
 
-// 	private readonly gl: WebGLRenderingContext;
-// 	private program: WebGLProgram | null = null;
-// 	private vertexBuffer: WebGLBuffer | null = null;
-// 	private vertexBufferSize: number = 0;
+class ShaderCompilationError extends Error {
+	public readonly shaderType: number;
 
-// 	constructor(gl: WebGLRenderingContext, width: number, height: number) {
-// 		this.gl = gl;
-// 		this.width = width;
-// 		this.height = height;
-// 		this.viewport = new Viewport(width, height);
-// 	}
+	constructor(type: number, errorLog: string) {
+		super(
+			`Failed to compile shader of type ${getShaderTypeName(type)}; ${errorLog}`
+		);
+		this.shaderType = type;
+	}
+}
 
-// 	public load(fragmentShader: string) {
-// 		this.loadProgram([
-// 			{
-// 				type: this.gl.VERTEX_SHADER,
-// 				source: vsSource
-// 			},
-// 			{
-// 				type: this.gl.FRAGMENT_SHADER,
-// 				source: fragmentShader
-// 			}
-// 		]);
-// 		if (!this.program) throw new Error("Failed to compile shader program.");
-// 		this.initVertexBuffer();
-// 		if (!this.vertexBuffer)
-// 			throw new Error("Failed to initialize vertex buffer.");
-// 	}
+interface Uniform {
+	name: string;
+	setter: (location: WebGLUniformLocation | null) => void;
+}
 
-// 	public unload() {
-// 		this.unloadProgram();
-// 		this.resetVertexBuffer();
-// 	}
+interface AttributeInfo {
+	name: string;
+	size: number;
+	type: number;
+}
 
-// 	public draw(time = 0) {
-// 		if (!this.program || !this.vertexBuffer)
-// 			throw new Error(
-// 				"No program loaded; use load() to load a shader program before calling draw()."
-// 			);
+interface Attribute {
+	size: number;
+	type: number;
+	buffer: WebGLBuffer;
+}
 
-// 		this.gl.viewport(0, 0, this.width, this.height);
-// 		this.gl.clearColor(0, 0, 0, 1);
-// 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+abstract class Renderer {
+	public readonly viewport: Viewport;
+	protected readonly gl: WebGL2RenderingContext;
 
-// 		const uViewportTransform = this.gl.getUniformLocation(
-// 			this.program,
-// 			"uViewportTransform"
-// 		);
-// 		const uViewportTransformInverse = this.gl.getUniformLocation(
-// 			this.program,
-// 			"uViewportTransformInverse"
-// 		);
-// 		const uViewportTranslation = this.gl.getUniformLocation(
-// 			this.program,
-// 			"uViewportTranslation"
-// 		);
-// 		const uViewportSize = this.gl.getUniformLocation(
-// 			this.program,
-// 			"uViewportSize"
-// 		);
-// 		const uAspectRatio = this.gl.getUniformLocation(
-// 			this.program,
-// 			"uAspectRatio"
-// 		);
-// 		const uTime = this.gl.getUniformLocation(this.program, "uTime");
+	private readonly uniforms: Uniform[] = [];
+	private readonly attributeMap: Map<string, Attribute> = new Map();
 
-// 		const transform = this.viewport.getAffineTransform();
-// 		const inverseTransform = this.viewport.getInverseAffineTransform().matrix;
-// 		this.gl.uniformMatrix2fv(uViewportTransform, false, transform.matrix);
-// 		this.gl.uniformMatrix2fv(
-// 			uViewportTransformInverse,
-// 			false,
-// 			inverseTransform
-// 		);
-// 		this.gl.uniform2fv(uViewportTranslation, transform.translation);
-// 		this.gl.uniform2fv(uViewportSize, [this.width, this.height]);
-// 		this.gl.uniform1f(uAspectRatio, this.width / this.height);
-// 		this.gl.uniform1f(uTime, time);
-// 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
+		this.viewport = viewport;
+		this.gl = gl;
+		this.gl.enable(this.gl.BLEND);
+		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+		this.setDefaultUniforms();
+	}
 
-// 		const aVertexPosition = this.gl.getAttribLocation(
-// 			this.program,
-// 			"aVertexPosition"
-// 		);
-// 		this.gl.enableVertexAttribArray(aVertexPosition);
-// 		this.gl.vertexAttribPointer(aVertexPosition, 2, this.gl.FLOAT, false, 0, 0);
-// 		this.gl.drawArrays(this.gl.TRIANGLES, 0, this.vertexBufferSize);
+	public render(): void {
+		this.clearScreen();
+		this.gl.viewport(0, 0, this.viewport.width, this.viewport.height);
+		this.draw();
+	}
 
-// 		const lastTime = Date.now();
-// 		requestAnimationFrame(() => {
-// 			const delta = Date.now() - lastTime;
-// 			this.draw(time + delta);
-// 		});
-// 	}
+	protected abstract draw(): void;
 
-// 	private loadProgram(shaders: ShaderList) {
-// 		const program = this.gl.createProgram();
-// 		if (!program) {
-// 			console.error("Failed to create WebGL shader program.");
-// 			return null;
-// 		}
+	protected pushAttribute(attributeInfo: AttributeInfo) {
+		const attribute = {
+			...attributeInfo,
+			buffer: this.createBuffer()
+		};
+		this.attributeMap.set(attributeInfo.name, attribute);
+	}
 
-// 		for (const { type, source } of shaders) {
-// 			const shader = this.loadShader(type, source);
-// 			if (!shader) continue;
-// 			this.gl.attachShader(program, shader);
-// 		}
+	protected setAttributeBuffer(
+		name: string,
+		data: BufferSource,
+		usage: number
+	) {
+		const attribute = this.attributeMap.get(name);
+		if (!attribute) return;
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, attribute.buffer);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, data, usage);
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+	}
 
-// 		this.gl.linkProgram(program);
-// 		if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
-// 			console.error(
-// 				`Failed to initialize shader program: ${this.gl.getProgramInfoLog(
-// 					program
-// 				)}`
-// 			);
-// 			return null;
-// 		}
+	protected setVertexAttributes(program: WebGLProgram) {
+		this.attributeMap.forEach(({ size, type, buffer }, name) => {
+			const location = this.gl.getAttribLocation(program, name);
+			if (location === -1) return;
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+			this.gl.enableVertexAttribArray(location);
+			this.gl.vertexAttribPointer(location, size, type, false, 0, 0);
+		});
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+	}
 
-// 		this.gl.useProgram(program);
-// 		this.gl.enable(this.gl.BLEND);
-// 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+	protected resetVertexAttributes(program: WebGLProgram) {
+		for (const name of this.attributeMap.keys()) {
+			const location = this.gl.getAttribLocation(program, name);
+			if (location === -1) continue;
+			this.gl.disableVertexAttribArray(location);
+		}
+	}
 
-// 		this.program = program;
-// 	}
+	protected clearScreen() {
+		this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+	}
 
-// 	private unloadProgram() {
-// 		this.gl.useProgram(null);
-// 		this.gl.disable(this.gl.BLEND);
-// 		this.program = null;
-// 	}
+	protected createBuffer(): WebGLBuffer {
+		const buffer = this.gl.createBuffer();
+		if (!buffer) throw new Error("Failed to create vertex buffer.");
+		return buffer;
+	}
 
-// 	private generateVertexSquare(x: number, y: number, size: number): number[] {
-// 		return [
-// 			// eslint-disable-next-line prettier/prettier
-// 			x, y,  x + size, y,         x + size, y + size,
-// 			// eslint-disable-next-line prettier/prettier
-// 			x, y,  x + size, y + size,  x,        y + size
-// 		];
-// 	}
+	protected pushUniform(uniform: Uniform) {
+		this.uniforms.push(uniform);
+	}
 
-// 	private generateVertexTiling(depth: number): Float32Array {
-// 		const vertices: number[] = [];
+	protected compileProgram(shaderSources: ShaderSourceList): WebGLProgram {
+		const program = this.gl.createProgram();
+		if (!program) throw new Error("Failed to create shader program.");
 
-// 		const size = 2 / depth;
-// 		const indexToCoord = (i: number) => size * i - 1;
-// 		for (let i = 0; i < depth; i++) {
-// 			for (let j = 0; j < depth; j++) {
-// 				const x = indexToCoord(i);
-// 				const y = indexToCoord(j);
-// 				vertices.push(...this.generateVertexSquare(x, y, size));
-// 			}
-// 		}
+		const shaders: WebGLShader[] = [];
 
-// 		return new Float32Array(vertices);
-// 	}
+		for (const { type, source } of shaderSources) {
+			const shader = this.compileShader(type, source);
+			this.gl.attachShader(program, shader);
+			shaders.push(shader);
+		}
 
-// 	private initVertexBuffer() {
-// 		// const vertices = new Float32Array([
-// 		// 	// eslint-disable-next-line prettier/prettier
-// 		// 	-1,  1,   1,  1,   -1, -1,
-// 		// 	-1, -1,   1,  1,    1, -1
-// 		// ]);
+		this.gl.linkProgram(program);
 
-// 		const vertices = this.generateVertexTiling(500);
+		for (const shader of shaders) {
+			this.gl.detachShader(program, shader);
+			this.gl.deleteShader(shader);
+		}
 
-// 		console.log(vertices);
+		if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+			const errorLog = this.gl.getProgramInfoLog(program);
+			this.gl.deleteProgram(program);
+			throw new Error(`Failed to link shader program; ${errorLog}`);
+		}
 
-// 		const vertexBuffer = this.gl.createBuffer();
-// 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
-// 		this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-// 		this.vertexBuffer = vertexBuffer;
-// 		this.vertexBufferSize = vertices.length / 2;
-// 	}
+		return program;
+	}
 
-// 	private resetVertexBuffer() {
-// 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
-// 		this.vertexBuffer = null;
-// 		this.vertexBufferSize = 0;
-// 	}
+	protected setUniforms(program: WebGLProgram, ...names: string[]) {
+		for (const uniform of this.uniforms) {
+			if (names.length > 0 && !names.includes(uniform.name)) continue;
+			const location = this.gl.getUniformLocation(program, uniform.name);
+			uniform.setter(location);
+		}
+	}
 
-// 	private loadShader(type: number, source: string): WebGLShader | null {
-// 		const shader = this.gl.createShader(type);
-// 		if (!shader) {
-// 			console.error("Failed to create WebGL shader.");
-// 			return null;
-// 		}
+	private compileShader(type: number, source: string): WebGLShader {
+		const shader = this.gl.createShader(type);
+		if (!shader) {
+			throw new Error(
+				`Failed to create WebGL shader of type ${getShaderTypeName(type)}`
+			);
+		}
+		this.gl.shaderSource(shader, source);
+		this.gl.compileShader(shader);
+		if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+			const errorLog =
+				this.gl.getShaderInfoLog(shader) ?? "An unknown error occurred.";
+			this.gl.deleteShader(shader);
+			throw new ShaderCompilationError(type, errorLog);
+		}
+		return shader;
+	}
 
-// 		this.gl.shaderSource(shader, source);
-// 		this.gl.compileShader(shader);
-// 		if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-// 			console.error(
-// 				`An error occurred during shader compilation: ${this.gl.getShaderInfoLog(
-// 					shader
-// 				)}`
-// 			);
-// 			this.gl.deleteShader(shader);
-// 			return null;
-// 		}
+	private setDefaultUniforms() {
+		this.pushUniform({
+			name: "uViewportScale",
+			setter: (location) => this.gl.uniform1f(location, this.viewport.scale)
+		});
+		this.pushUniform({
+			name: "uViewportTranslation",
+			setter: (location) =>
+				this.gl.uniform2fv(location, this.viewport.translation)
+		});
+		this.pushUniform({
+			name: "uViewportAspectRatio",
+			setter: (location) =>
+				this.gl.uniform1f(location, this.viewport.width / this.viewport.height)
+		});
+	}
+}
 
-// 		return shader;
-// 	}
-// }
-
-// export default WebGLRenderer;
+export default Renderer;
+export { ShaderCompilationError };
+export type { ShaderSourceList };

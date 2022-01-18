@@ -1,16 +1,24 @@
-import React from "react";
 import { CssBaseline } from "@mui/material";
-import WebGLCanvas from "./render/WebGLCanvas";
+import TransformRenderer from "./render/transform_renderer";
+import WebGLCanvas from "./components/WebGLCanvas";
+import Viewport from "./render/viewport";
+import ResponsiveViewport from "./components/ResponsiveViewport";
 
-const App = () => (
-	<>
-		<CssBaseline />
-		<WebGLCanvas
-			width={window.innerWidth}
-			height={window.innerHeight}
-			callback={(gl, width, height) => {}}
-		/>
-	</>
-);
+const App = () => {
+	const viewport = new Viewport(window.innerWidth, window.innerHeight);
+	return (
+		<>
+			<CssBaseline />
+			<ResponsiveViewport viewport={viewport}>
+				<WebGLCanvas width={viewport.width} height={viewport.height}>
+					{(gl) => {
+						const renderer = new TransformRenderer(viewport, gl);
+						renderer.render();
+					}}
+				</WebGLCanvas>
+			</ResponsiveViewport>
+		</>
+	);
+};
 
 export default App;

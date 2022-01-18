@@ -1,15 +1,11 @@
 #version 300 es
 
 in vec4 aVertexPosition;
-out vec2 vFragCoord;
 
 uniform float uViewportScale;
 uniform vec2 uViewportTranslation;
 uniform float uViewportAspectRatio;
 uniform float uTime;
-uniform uint uLineDirection;
-
-const float TAU = 6.28318530718;
 
 vec2 transform(vec2 pos) {
 	// return pos;
@@ -28,8 +24,6 @@ float interpolationFunc(float t) {
 vec2 interpolatedTransform(vec2 pos) {
 	return pos + interpolationFunc(uTime) * (transform(pos) - pos);
 }
-
-const float lineThickness = 0.005;
 
 void main() {
 	vec2 coordinate = vec2(aVertexPosition.x, aVertexPosition.y / uViewportAspectRatio);
