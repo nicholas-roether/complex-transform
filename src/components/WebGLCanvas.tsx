@@ -1,14 +1,5 @@
 import Canvas from "./Canvas";
 
-class RenderContextCreationError extends Error {
-	public readonly context: string;
-
-	constructor(context: string, message: string) {
-		super(message);
-		this.context = context;
-	}
-}
-
 interface WebGLCanvasProps {
 	width?: number;
 	height?: number;
@@ -24,8 +15,7 @@ const WebGLCanvas = ({
 		{(canvas) => {
 			const gl = canvas.getContext("webgl2");
 			if (!gl) {
-				throw new RenderContextCreationError(
-					"webgl2",
+				throw new Error(
 					"WebGL rendering context creation failed. Make sure your browser supports WebGL 2.0."
 				);
 			}
@@ -36,4 +26,4 @@ const WebGLCanvas = ({
 
 export default WebGLCanvas;
 
-export { RenderContextCreationError };
+export type { WebGLCanvasProps };

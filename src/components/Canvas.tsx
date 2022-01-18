@@ -10,6 +10,8 @@ interface CanvasProps {
 const Canvas = ({ width, height, children: callback }: CanvasProps) => {
 	const canvasRef = React.createRef<HTMLCanvasElement>();
 
+	console.log(callback);
+
 	React.useEffect(() => {
 		if (!canvasRef.current) return console.error("WebGL canvas not found");
 		callback?.(canvasRef.current);
