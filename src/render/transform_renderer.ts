@@ -7,7 +7,7 @@ class TransformRenderer extends Renderer {
 	private readonly lineShaderProgram: WebGLProgram;
 	private mainGridLines: Float32Array[];
 	private subGridLines: Float32Array[];
-	private subline: boolean = false;
+	private color: [r: number, g: number, b: number] = [0, 0, 0];
 
 	// TEMPORARY
 	private time: number = 0;
@@ -24,16 +24,16 @@ class TransformRenderer extends Renderer {
 			setter: (location) => this.gl.uniform1f(location, this.time)
 		});
 		this.pushUniform({
-			name: "uSubline",
-			setter: (location) => this.gl.uniform1ui(location, this.subline ? 1 : 0)
+			name: "uColor",
+			setter: (location) => this.gl.uniform3fv(location, this.color)
 		});
 		this.pushAttribute({
 			name: "aVertexPosition",
 			type: this.gl.FLOAT,
 			size: 2
 		});
-		this.mainGridLines = this.generateSubGrid(50, 50, 3000);
-		this.subGridLines = this.generateMainGrid(50, 50, 3000);
+		this.subGridLines = this.generateSubGrid(50, 50, 3000);
+		this.mainGridLines = this.generateMainGrid(50, 50, 3000);
 	}
 
 	protected draw(): void {
@@ -104,25 +104,44 @@ class TransformRenderer extends Renderer {
 
 	protected drawGrid() {
 		this.gl.useProgram(this.lineShaderProgram);
-		this.subline = true;
+		this.color = [0.2, 0.2, 0.2];
 		this.setUniforms(this.lineShaderProgram);
 
+		// Subdivision lines
+		for (const line of this.subGridLines)
+			this.drawLine(this.lineShaderProgram, line, this.gl.STREAM_DRAW);
+
+		const axes: Float32Array[] = [];
+
+		// Non-axis main gridlines
+		this.color = [0.3, 0.8, 1.0];
+		this.setUniforms(this.lineShaderProgram, "uColor");
 		for (const line of this.mainGridLines) {
-			this.setAttributeBuffer("aVertexPosition", line, this.gl.STREAM_DRAW);
-			this.setVertexAttributes(this.lineShaderProgram);
-			this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.length / 2);
+			if (line[0] === 0 || line[1] === 0) {
+				axes.push(line);
+				continue;
+			}
+			this.drawLine(this.lineShaderProgram, line, this.gl.STREAM_DRAW);
 		}
 
-		this.subline = false;
-		this.setUniforms(this.lineShaderProgram, "uSubline");
-		for (const line of this.subGridLines) {
-			this.setAttributeBuffer("aVertexPosition", line, this.gl.STREAM_DRAW);
-			this.setVertexAttributes(this.lineShaderProgram);
-			this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.length / 2);
-		}
+		// Axis lines
+		this.color = [0.3, 0.4, 1.0];
+		this.setUniforms(this.lineShaderProgram, "uColor");
+		for (const axis of axes)
+			this.drawLine(this.lineShaderProgram, axis, this.gl.STREAM_DRAW);
 
 		this.resetVertexAttributes(this.lineShaderProgram);
 		this.gl.useProgram(null);
+	}
+
+	protected drawLine(
+		program: WebGLProgram,
+		line: Float32Array,
+		bufferUsage: number
+	) {
+		this.setAttributeBuffer("aVertexPosition", line, bufferUsage);
+		this.setVertexAttributes(program);
+		this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.length / 2);
 	}
 
 	private generateSegmentedLine(
