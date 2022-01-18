@@ -57,6 +57,7 @@ abstract class Renderer {
 		this.gl.enable(this.gl.BLEND);
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 		this.setDefaultUniforms();
+		viewport.addEventListener("change", () => this.render());
 	}
 
 	public render(): void {

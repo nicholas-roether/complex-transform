@@ -40,7 +40,7 @@ class TransformRenderer extends Renderer {
 		this.drawGrid();
 
 		// TEMPORARY
-		// if (this.time === 1) return;
+		if (this.time === 1) return;
 		const nextFrame = () => {
 			requestAnimationFrame((now) => {
 				let delta = 0;
