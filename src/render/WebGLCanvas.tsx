@@ -1,44 +1,39 @@
-import styled from "@emotion/styled";
-import React from "react";
-import TransformRenderer from "./transform_renderer";
+import Canvas from "./Canvas";
 
-interface WebGLCanvasProps {
-	width: number;
-	height: number;
-	callback: (gl: WebGLRenderingContext, width: number, height: number) => void;
+class RenderContextCreationError extends Error {
+	public readonly context: string;
+
+	constructor(context: string, message: string) {
+		super(message);
+		this.context = context;
+	}
 }
 
-const WebGLCanvas = ({ width, height, callback }: WebGLCanvasProps) => {
-	const canvasRef = React.createRef<HTMLCanvasElement>();
+interface WebGLCanvasProps {
+	width?: number;
+	height?: number;
+	children?: (gl: WebGL2RenderingContext) => void;
+}
 
-	React.useEffect(() => {
-		if (!canvasRef.current) return console.error("WebGL canvas not found");
-		// const gl = canvasRef.current.getContext("webgl2");
-		// if (!gl) {
-		// 	alert(
-		// 		"WebGL initialization failed. Make sure that your device and your browser support WebGL 2.0."
-		// 	);
-		// 	return;
-		// }
-		// gl.clearColor(0, 0, 0, 1);
-		// gl.clear(gl.COLOR_BUFFER_BIT);
-		// callback(gl, canvasRef.current.width, canvasRef.current.height);
-		const transformRenderer = new TransformRenderer(canvasRef.current);
-		transformRenderer.viewport.scaleBy(0.1);
-		transformRenderer.render();
-	}, [callback, canvasRef]);
-
-	const BlockCanvas = styled.canvas`
-		display: block;
-	`;
-
-	return (
-		<BlockCanvas ref={canvasRef} width={width} height={height}>
-			Canvas rendering is not supported by your browser.
-		</BlockCanvas>
-	);
-};
+const WebGLCanvas = ({
+	width,
+	height,
+	children: callback
+}: WebGLCanvasProps) => (
+	<Canvas width={width} height={height}>
+		{(canvas) => {
+			const gl = canvas.getContext("webgl2");
+			if (!gl) {
+				throw new RenderContextCreationError(
+					"webgl2",
+					"WebGL rendering context creation failed. Make sure your browser supports WebGL 2.0."
+				);
+			}
+			callback?.(gl);
+		}}
+	</Canvas>
+);
 
 export default WebGLCanvas;
 
-export type { WebGLCanvasProps };
+export { RenderContextCreationError };

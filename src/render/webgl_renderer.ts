@@ -5,15 +5,6 @@ type ShaderSourceList = {
 	source: string;
 }[];
 
-class RenderContextCreationError extends Error {
-	public readonly context: string;
-
-	constructor(context: string, message: string) {
-		super(message);
-		this.context = context;
-	}
-}
-
 function getShaderTypeName(type: number) {
 	for (const name in WebGL2RenderingContext) {
 		if (
@@ -54,23 +45,14 @@ interface Attribute {
 }
 
 abstract class Renderer {
-	public readonly canvas: HTMLCanvasElement;
 	public readonly viewport: Viewport;
 	protected readonly gl: WebGL2RenderingContext;
 
 	private readonly uniforms: Uniform[] = [];
 	private readonly attributeMap: Map<string, Attribute> = new Map();
 
-	constructor(canvas: HTMLCanvasElement) {
-		this.canvas = canvas;
-		this.viewport = new Viewport(canvas);
-		const gl = canvas.getContext("webgl2");
-		if (!gl) {
-			throw new RenderContextCreationError(
-				"webgl2",
-				"WebGL rendering context creation failed. Make sure your browser supports WebGL 2.0."
-			);
-		}
+	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
+		this.viewport = viewport;
 		this.gl = gl;
 		this.gl.enable(this.gl.BLEND);
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
@@ -212,5 +194,5 @@ abstract class Renderer {
 }
 
 export default Renderer;
-export { RenderContextCreationError, ShaderCompilationError };
+export { ShaderCompilationError };
 export type { ShaderSourceList };

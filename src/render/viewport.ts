@@ -1,18 +1,12 @@
 class Viewport {
-	public readonly canvas: HTMLCanvasElement;
+	public readonly width: number;
+	public readonly height: number;
 	public translation: [number, number] = [0, 0];
 	public scale: number = 1;
 
-	constructor(canvas: HTMLCanvasElement) {
-		this.canvas = canvas;
-	}
-
-	public get width(): number {
-		return this.canvas.width;
-	}
-
-	public get height(): number {
-		return this.canvas.height;
+	constructor(width: number, height: number) {
+		this.width = width;
+		this.height = height;
 	}
 
 	translateX(dx: number) {

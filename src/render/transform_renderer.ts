@@ -1,6 +1,7 @@
-import Renderer from "./renderer";
+import Renderer from "./webgl_renderer";
 import lineVert from "./shaders/line.vert.glsl";
 import lineFrag from "./shaders/line.frag.glsl";
+import Viewport from "./viewport";
 
 class TransformRenderer extends Renderer {
 	private readonly lineShaderProgram: WebGLProgram;
@@ -12,8 +13,8 @@ class TransformRenderer extends Renderer {
 	private time: number = 0;
 	private last: number | null = null;
 
-	constructor(canvas: HTMLCanvasElement) {
-		super(canvas);
+	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
+		super(viewport, gl);
 		this.lineShaderProgram = this.compileProgram([
 			{ type: this.gl.VERTEX_SHADER, source: lineVert },
 			{ type: this.gl.FRAGMENT_SHADER, source: lineFrag }
