@@ -28,14 +28,17 @@ class Viewport extends EventTarget {
 
 	public moveTo(x: number, y: number) {
 		this._translation = [x, y];
+		this.changed();
 	}
 
 	public scaleBy(factor: number) {
 		this._scale *= factor;
+		this.changed();
 	}
 
 	public setScale(scale: number) {
 		this._scale = scale;
+		this.changed();
 	}
 
 	public toViewportSpace(

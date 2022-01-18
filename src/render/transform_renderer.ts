@@ -46,7 +46,6 @@ class TransformRenderer extends Renderer {
 
 	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
 		super(viewport, gl);
-		console.log(TransformRenderer.bufferSectionMappings);
 		this.lineShaderProgram = this.compileProgram([
 			{ type: this.gl.VERTEX_SHADER, source: lineVert },
 			{ type: this.gl.FRAGMENT_SHADER, source: lineFrag }
