@@ -57,7 +57,6 @@ abstract class Renderer {
 	public readonly canvas: HTMLCanvasElement;
 	public readonly viewport: Viewport;
 	protected readonly gl: WebGL2RenderingContext;
-	// protected readonly ctx: CanvasRenderingContext2D;
 
 	private readonly uniforms: Uniform[] = [];
 	private readonly attributeMap: Map<string, Attribute> = new Map();
@@ -65,14 +64,6 @@ abstract class Renderer {
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
 		this.viewport = new Viewport(canvas);
-		// const ctx = canvas.getContext("2d");
-		// if (!ctx) {
-		// 	throw new RenderContextCreationError(
-		// 		"2d",
-		// 		"2D rendering context creation failed. Make sure your browser supports the Canvas 2D rendering API as well as WebGL 2.0."
-		// 	);
-		// }
-		// this.ctx = ctx;
 		const gl = canvas.getContext("webgl2");
 		if (!gl) {
 			throw new RenderContextCreationError(
