@@ -3,10 +3,41 @@ import lineVert from "./shaders/line.vert.glsl";
 import lineFrag from "./shaders/line.frag.glsl";
 import Viewport from "./viewport";
 
+interface BufferSectionMapping {
+	color: [r: number, g: number, b: number];
+	length: number;
+}
+
+interface GridVertexMesh {
+	buffer: Float32Array;
+	segmentLengths: number[];
+}
+
 class TransformRenderer extends Renderer {
+	private static readonly GRID_SIZE = 60;
+	private static readonly SUBDIVISION = 5;
+	private static readonly SEGMENTS = 80;
+	private static gridVertexMesh: GridVertexMesh = this.generateGridVertices();
+	private static vertexBuffer = this.gridVertexMesh.buffer;
+	private static LINE_LENGTH = this.GRID_SIZE * this.SEGMENTS + 1;
+	private static bufferSectionMappings: BufferSectionMapping[] = [
+		{
+			color: [0.2, 0.2, 0.2],
+			length: this.gridVertexMesh.segmentLengths[0] / 2
+		},
+		{
+			color: [0.3, 0.8, 1.0],
+			length: this.gridVertexMesh.segmentLengths[1] / 2
+		},
+		{
+			color: [0.3, 0.4, 1.0],
+			length: this.gridVertexMesh.segmentLengths[2] / 2
+		}
+	];
+
 	private readonly lineShaderProgram: WebGLProgram;
-	private mainGridLines: Float32Array[];
-	private subGridLines: Float32Array[];
+	// private mainGridLines: Float32Array[];
+	// private subGridLines: Float32Array[];
 	private color: [r: number, g: number, b: number] = [0, 0, 0];
 
 	// TEMPORARY
@@ -15,6 +46,7 @@ class TransformRenderer extends Renderer {
 
 	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
 		super(viewport, gl);
+		console.log(TransformRenderer.bufferSectionMappings);
 		this.lineShaderProgram = this.compileProgram([
 			{ type: this.gl.VERTEX_SHADER, source: lineVert },
 			{ type: this.gl.FRAGMENT_SHADER, source: lineFrag }
@@ -32,8 +64,6 @@ class TransformRenderer extends Renderer {
 			type: this.gl.FLOAT,
 			size: 2
 		});
-		this.subGridLines = this.generateSubGrid(50, 50, 3000);
-		this.mainGridLines = this.generateMainGrid(50, 50, 3000);
 	}
 
 	protected draw(): void {
@@ -55,107 +85,95 @@ class TransformRenderer extends Renderer {
 		else nextFrame();
 	}
 
-	private generateSubGrid(
-		width: number,
-		height: number,
-		numSegments: number
-	): Float32Array[] {
-		const subDiv = 5;
-		const lines: Float32Array[] = [];
-		for (let i = 0; i <= subDiv * height; i++) {
-			if (i % subDiv === 0) continue;
-			const start: [number, number] = [-width / 2, i / subDiv - height / 2];
-			const end: [number, number] = [width / 2, i / subDiv - height / 2];
-			const vertices = this.generateSegmentedLine(start, end, numSegments);
-			lines.push(vertices);
-		}
-
-		for (let i = 0; i <= subDiv * width; i++) {
-			if (i % subDiv === 0) continue;
-			const start: [number, number] = [i / subDiv - width / 2, -height / 2];
-			const end: [number, number] = [i / subDiv - width / 2, height / 2];
-			const vertices = this.generateSegmentedLine(start, end, numSegments);
-			lines.push(vertices);
-		}
-		return lines;
-	}
-
-	private generateMainGrid(
-		width: number,
-		height: number,
-		numSegments: number
-	): Float32Array[] {
-		const lines: Float32Array[] = [];
-		for (let i = 0; i <= height; i++) {
-			const start: [number, number] = [-width / 2, i - height / 2];
-			const end: [number, number] = [width / 2, i - height / 2];
-			const vertices = this.generateSegmentedLine(start, end, numSegments);
-			lines.push(vertices);
-		}
-
-		for (let i = 0; i <= width; i++) {
-			const start: [number, number] = [i - width / 2, -height / 2];
-			const end: [number, number] = [i - width / 2, height / 2];
-			const vertices = this.generateSegmentedLine(start, end, numSegments);
-			lines.push(vertices);
-		}
-		return lines;
-	}
-
 	protected drawGrid() {
 		this.gl.useProgram(this.lineShaderProgram);
 		this.color = [0.2, 0.2, 0.2];
 		this.setUniforms(this.lineShaderProgram);
+		this.setAttributeBuffer(
+			"aVertexPosition",
+			TransformRenderer.vertexBuffer,
+			this.gl.STATIC_DRAW
+		);
+		this.setVertexAttributes(this.lineShaderProgram);
 
-		// Subdivision lines
-		for (const line of this.subGridLines)
-			this.drawLine(this.lineShaderProgram, line, this.gl.STREAM_DRAW);
-
-		const axes: Float32Array[] = [];
-
-		// Non-axis main gridlines
-		this.color = [0.3, 0.8, 1.0];
-		this.setUniforms(this.lineShaderProgram, "uColor");
-		for (const line of this.mainGridLines) {
-			if (line[0] === 0 || line[1] === 0) {
-				axes.push(line);
-				continue;
-			}
-			this.drawLine(this.lineShaderProgram, line, this.gl.STREAM_DRAW);
+		let position = 0;
+		for (const mapping of TransformRenderer.bufferSectionMappings) {
+			this.color = mapping.color;
+			this.setUniforms(this.lineShaderProgram, "uColor");
+			this.drawLines(position, mapping.length);
+			position += mapping.length;
+			// break;
 		}
-
-		// Axis lines
-		this.color = [0.3, 0.4, 1.0];
-		this.setUniforms(this.lineShaderProgram, "uColor");
-		for (const axis of axes)
-			this.drawLine(this.lineShaderProgram, axis, this.gl.STREAM_DRAW);
 
 		this.resetVertexAttributes(this.lineShaderProgram);
 		this.gl.useProgram(null);
 	}
 
-	protected drawLine(
-		program: WebGLProgram,
-		line: Float32Array,
-		bufferUsage: number
-	) {
-		this.setAttributeBuffer("aVertexPosition", line, bufferUsage);
-		this.setVertexAttributes(program);
-		this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.length / 2);
+	private drawLines(start: number, length: number) {
+		for (let i = 0; i < length; i += TransformRenderer.LINE_LENGTH) {
+			this.drawLine(start + i, TransformRenderer.LINE_LENGTH);
+		}
 	}
 
-	private generateSegmentedLine(
+	private drawLine(start: number, length: number) {
+		this.gl.drawArrays(this.gl.LINE_STRIP, start, length);
+	}
+
+	private static generateGridVertices(): GridVertexMesh {
+		const verticalLine = (x: number) =>
+			this.generateSegmentedLine([x, -halfSize], [x, halfSize], this.SEGMENTS);
+		const horizontalLine = (y: number) =>
+			this.generateSegmentedLine([-halfSize, y], [halfSize, y], this.SEGMENTS);
+
+		const halfSize = this.GRID_SIZE / 2;
+		const axisVertices: number[] = [...horizontalLine(0), ...verticalLine(0)];
+
+		const mainVertices: number[] = [];
+		for (let i = -halfSize; i <= halfSize; i++) {
+			if (i === 0) continue;
+			mainVertices.push(...horizontalLine(i));
+			mainVertices.push(...verticalLine(i));
+		}
+
+		const subVertices: number[] = [];
+		const subStep = 1 / this.SUBDIVISION;
+		for (let i = -halfSize; i <= halfSize; i += subStep) {
+			if (i % 1 === 0) continue;
+			subVertices.push(...horizontalLine(i));
+			subVertices.push(...verticalLine(i));
+		}
+
+		return {
+			buffer: new Float32Array([
+				...subVertices,
+				...mainVertices,
+				...axisVertices
+			]),
+			segmentLengths: [
+				subVertices.length,
+				mainVertices.length,
+				axisVertices.length
+			]
+		};
+	}
+
+	private static generateSegmentedLine(
 		start: [x: number, y: number],
 		end: [x: number, y: number],
-		numSegments: number
-	): Float32Array {
+		segments: number
+	): number[] {
 		const vertices: number[] = [];
-		for (let i = 0; i <= numSegments; i++) {
-			const x = start[0] + (i / numSegments) * (end[0] - start[0]);
-			const y = start[1] + (i / numSegments) * (end[1] - start[1]);
-			vertices.push(...this.viewport.toNormalized([x, y]));
+		const width = end[0] - start[0];
+		const height = end[1] - start[1];
+		const step = 1 / segments;
+		for (let i = 0; i <= width * segments; i++) {
+			for (let j = 0; j <= height * segments; j++) {
+				const x = start[0] + i * step;
+				const y = start[1] + j * step;
+				vertices.push(x, y);
+			}
 		}
-		return new Float32Array(vertices);
+		return vertices;
 	}
 }
 

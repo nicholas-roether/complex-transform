@@ -26,7 +26,7 @@ vec2 interpolatedTransform(vec2 pos) {
 }
 
 void main() {
-	vec2 coordinate = vec2(aVertexPosition.x, aVertexPosition.y / uViewportAspectRatio);
+	vec2 coordinate = vec2(aVertexPosition.x, aVertexPosition.y);
 	vec2 transformedCoord = interpolatedTransform(coordinate);
 	vec2 transformedPos = vec2(transformedCoord.x, transformedCoord.y * uViewportAspectRatio);
 
