@@ -102,7 +102,6 @@ class TransformRenderer extends Renderer {
 			this.setUniforms(this.lineShaderProgram, "uColor");
 			this.drawLines(position, mapping.length);
 			position += mapping.length;
-			// break;
 		}
 
 		this.resetVertexAttributes(this.lineShaderProgram);
