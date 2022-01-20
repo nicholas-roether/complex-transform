@@ -36,8 +36,6 @@ class TransformRenderer extends Renderer {
 	];
 
 	private readonly lineShaderProgram: WebGLProgram;
-	// private mainGridLines: Float32Array[];
-	// private subGridLines: Float32Array[];
 	private color: [r: number, g: number, b: number] = [0, 0, 0];
 
 	// TEMPORARY
@@ -63,6 +61,11 @@ class TransformRenderer extends Renderer {
 			type: this.gl.FLOAT,
 			size: 2
 		});
+		this.setAttributeBuffer(
+			"aVertexPosition",
+			TransformRenderer.vertexBuffer,
+			this.gl.STATIC_DRAW
+		);
 	}
 
 	protected draw(): void {
@@ -88,11 +91,6 @@ class TransformRenderer extends Renderer {
 		this.gl.useProgram(this.lineShaderProgram);
 		this.color = [0.2, 0.2, 0.2];
 		this.setUniforms(this.lineShaderProgram);
-		this.setAttributeBuffer(
-			"aVertexPosition",
-			TransformRenderer.vertexBuffer,
-			this.gl.STATIC_DRAW
-		);
 		this.setVertexAttributes(this.lineShaderProgram);
 
 		let position = 0;
@@ -136,7 +134,8 @@ class TransformRenderer extends Renderer {
 		const subVertices: number[] = [];
 		const subStep = 1 / this.SUBDIVISION;
 		for (let i = -halfSize; i <= halfSize; i += subStep) {
-			if (i % 1 === 0) continue;
+			// Account for floating point errors
+			if (Math.abs(i % 1) < subStep / 2) continue;
 			subVertices.push(...horizontalLine(i));
 			subVertices.push(...verticalLine(i));
 		}

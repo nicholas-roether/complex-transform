@@ -2,9 +2,8 @@
 
 in vec4 aVertexPosition;
 
-uniform float uViewportScale;
-uniform vec2 uViewportTranslation;
-uniform float uViewportAspectRatio;
+uniform mat2 uScreenspaceMatrix;
+uniform vec2 uScreenspaceOffset;
 uniform float uTime;
 
 vec2 transform(vec2 pos) {
@@ -28,7 +27,5 @@ vec2 interpolatedTransform(vec2 pos) {
 void main() {
 	vec2 coordinate = vec2(aVertexPosition.x, aVertexPosition.y);
 	vec2 transformedCoord = interpolatedTransform(coordinate);
-	vec2 transformedPos = vec2(transformedCoord.x, transformedCoord.y * uViewportAspectRatio);
-
-	gl_Position = vec4(uViewportScale * transformedPos + uViewportTranslation, 0.0, 1.0);
+	gl_Position = vec4(uScreenspaceMatrix * transformedCoord + uScreenspaceOffset, 0.0, 1.0);
 }

@@ -6,6 +6,8 @@ import ResponsiveViewport from "./components/ResponsiveViewport";
 
 const App = () => {
 	const viewport = new Viewport(window.innerWidth, window.innerHeight);
+	viewport.setScale(2);
+	console.log(viewport.screenspaceMatrix);
 	return (
 		<>
 			<CssBaseline />

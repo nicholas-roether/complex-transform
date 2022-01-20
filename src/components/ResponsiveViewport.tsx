@@ -16,19 +16,37 @@ const ResponsiveViewport = ({
 	children
 }: PropsWithChildren<ResponsiveViewportProps>) => {
 	const dragging = useRef(false);
+	const divRef = useRef<HTMLDivElement>(null);
+
+	const getOffsetPos = useCallback(
+		(screenX: number, screenY: number): [number, number] => {
+			if (!divRef.current)
+				throw new Error("responsive viewport div ref was null.");
+			return [
+				screenX -
+					divRef.current.offsetLeft -
+					viewport.translation[0] -
+					viewport.width / 2,
+				screenY -
+					divRef.current.offsetTop -
+					viewport.translation[1] -
+					viewport.height / 2
+			];
+		},
+		[viewport.height, viewport.translation, viewport.width]
+	);
+
 	const onWheel = useCallback(
 		(evt: WheelEvent) => {
-			evt.preventDefault();
 			const factor = Math.pow(2, evt.deltaY * -0.0008);
 			viewport.scaleBy(factor);
-			// viewport.translate(
-			// 	// TODO this is also terrible
-			// 	((1 - factor) * (evt.pageX - viewport.width / 2)) / viewport.height,
-			// 	(((1 - factor) * (viewport.height - evt.pageY)) / 2 / viewport.height) *
-			// 		viewport.aspectRatio
-			// );
+			const offsetPos = getOffsetPos(evt.pageX, evt.pageY);
+			viewport.translate(
+				(1 - factor) * offsetPos[0],
+				(1 - factor) * offsetPos[1]
+			);
 		},
-		[viewport]
+		[getOffsetPos, viewport]
 	);
 	const onMouseDown = useCallback((evt: MouseEvent) => {
 		evt.preventDefault();
@@ -42,12 +60,7 @@ const ResponsiveViewport = ({
 		(evt: MouseEvent) => {
 			evt.preventDefault();
 			if (dragging.current) {
-				viewport.translate(
-					evt.movementX / viewport.height,
-					// TODO this is dumb, make this make sense
-					(-evt.movementY / viewport.height) * viewport.aspectRatio
-				);
-				console.log(viewport.scale);
+				viewport.translate(evt.movementX, evt.movementY);
 			}
 		},
 		[viewport]
@@ -58,6 +71,7 @@ const ResponsiveViewport = ({
 			onMouseDown={onMouseDown}
 			onMouseUp={onMouseUp}
 			onMouseMove={onMouseMove}
+			ref={divRef}
 		>
 			{children}
 		</div>

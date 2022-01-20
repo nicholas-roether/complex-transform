@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import React from "react";
+import React, { useRef } from "react";
 
 interface CanvasProps {
 	width?: number;
@@ -8,7 +8,7 @@ interface CanvasProps {
 }
 
 const Canvas = ({ width, height, children: callback }: CanvasProps) => {
-	const canvasRef = React.createRef<HTMLCanvasElement>();
+	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return console.error("WebGL canvas not found");

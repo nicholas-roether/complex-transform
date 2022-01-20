@@ -1,6 +1,7 @@
 class Viewport extends EventTarget {
 	public readonly width: number;
 	public readonly height: number;
+	private static readonly BASE_SCALE = 0.25;
 	private _translation: [number, number] = [0, 0];
 	private _scale: number = 1;
 
@@ -63,6 +64,28 @@ class Viewport extends EventTarget {
 
 	public get scale() {
 		return this._scale;
+	}
+
+	public get screenspaceMatrix(): [number, number, number, number] {
+		let widthFactor = 1 / this.aspectRatio;
+		let heightFactor = 1;
+		if (this.height > this.width) {
+			heightFactor = this.aspectRatio;
+			widthFactor = 1;
+		}
+		return [
+			this.scale * Viewport.BASE_SCALE * widthFactor,
+			0,
+			0,
+			this.scale * Viewport.BASE_SCALE * heightFactor
+		];
+	}
+
+	public get translationVector(): [number, number] {
+		return [
+			(2 * this.translation[0]) / this.width,
+			(-2 * this.translation[1]) / this.height
+		];
 	}
 
 	protected changed() {

@@ -178,18 +178,18 @@ abstract class Renderer {
 
 	private setDefaultUniforms() {
 		this.pushUniform({
-			name: "uViewportScale",
-			setter: (location) => this.gl.uniform1f(location, this.viewport.scale)
+			name: "uScreenspaceMatrix",
+			setter: (location) =>
+				this.gl.uniformMatrix2fv(
+					location,
+					false,
+					this.viewport.screenspaceMatrix
+				)
 		});
 		this.pushUniform({
-			name: "uViewportTranslation",
+			name: "uScreenspaceOffset",
 			setter: (location) =>
-				this.gl.uniform2fv(location, this.viewport.translation)
-		});
-		this.pushUniform({
-			name: "uViewportAspectRatio",
-			setter: (location) =>
-				this.gl.uniform1f(location, this.viewport.width / this.viewport.height)
+				this.gl.uniform2fv(location, this.viewport.translationVector)
 		});
 	}
 }
