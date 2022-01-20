@@ -1,5 +1,7 @@
 #version 300 es
 
+precision highp float;
+
 in vec4 aVertexPosition;
 
 uniform mat2 uScreenspaceMatrix;
