@@ -50,10 +50,12 @@ const ResponsiveViewport = ({
 	);
 	const onMouseDown = useCallback((evt: MouseEvent) => {
 		evt.preventDefault();
+		if (divRef.current) divRef.current.style.cursor = "grabbing";
 		dragging.current = true;
 	}, []);
 	const onMouseUp = useCallback((evt: MouseEvent) => {
 		evt.preventDefault();
+		if (divRef.current) divRef.current.style.cursor = "default";
 		dragging.current = false;
 	}, []);
 	const onMouseMove = useCallback(
