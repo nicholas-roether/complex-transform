@@ -50,6 +50,9 @@ abstract class Renderer {
 
 	private readonly uniforms: Uniform[] = [];
 	private readonly attributeMap: Map<string, Attribute> = new Map();
+	private updateScheduled = false;
+	private lastFrame: DOMHighResTimeStamp | null = null;
+	private running = false;
 
 	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
 		this.viewport = viewport;
@@ -57,16 +60,25 @@ abstract class Renderer {
 		this.gl.enable(this.gl.BLEND);
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 		this.setDefaultUniforms();
-		viewport.addEventListener("change", () => this.render());
+		viewport.addEventListener("change", () => this.update());
 	}
 
-	public render(): void {
-		this.clearScreen();
-		this.gl.viewport(0, 0, this.viewport.width, this.viewport.height);
-		this.draw();
+	public start(): void {
+		this.running = true;
+		/*setTimeout( */ this.drawLoop() /* ) */;
+	}
+
+	public stop(): void {
+		this.running = false;
+	}
+
+	public update(): void {
+		this.updateScheduled = true;
 	}
 
 	protected abstract draw(): void;
+
+	protected abstract frame(dt: number): void;
 
 	protected pushAttribute(attributeInfo: AttributeInfo) {
 		const attribute = {
@@ -156,6 +168,24 @@ abstract class Renderer {
 			const location = this.gl.getUniformLocation(program, uniform.name);
 			uniform.setter(location);
 		}
+	}
+
+	private drawLoop(ts?: DOMHighResTimeStamp) {
+		if (!this.running) return;
+		if (ts) {
+			if (this.lastFrame != null) {
+				const dt = ts - this.lastFrame;
+				this.frame(dt);
+			}
+			this.lastFrame = ts;
+		}
+		if (this.updateScheduled) {
+			this.clearScreen();
+			this.gl.viewport(0, 0, this.viewport.width, this.viewport.height);
+			this.draw();
+			this.updateScheduled = false;
+		}
+		requestAnimationFrame((ts) => this.drawLoop(ts));
 	}
 
 	private compileShader(type: number, source: string): WebGLShader {

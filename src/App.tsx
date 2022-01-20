@@ -7,7 +7,6 @@ import ResponsiveViewport from "./components/ResponsiveViewport";
 const App = () => {
 	const viewport = new Viewport(window.innerWidth, window.innerHeight);
 	viewport.setScale(2);
-	console.log(viewport.screenspaceMatrix);
 	return (
 		<>
 			<CssBaseline />
@@ -15,7 +14,7 @@ const App = () => {
 				<WebGLCanvas width={viewport.width} height={viewport.height}>
 					{(gl) => {
 						const renderer = new TransformRenderer(viewport, gl);
-						renderer.render();
+						renderer.start();
 					}}
 				</WebGLCanvas>
 			</ResponsiveViewport>

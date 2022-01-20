@@ -37,10 +37,8 @@ class TransformRenderer extends Renderer {
 
 	private readonly lineShaderProgram: WebGLProgram;
 	private color: [r: number, g: number, b: number] = [0, 0, 0];
-
-	// TEMPORARY
+	private finished = false;
 	private time: number = 0;
-	private last: number | null = null;
 
 	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
 		super(viewport, gl);
@@ -69,25 +67,6 @@ class TransformRenderer extends Renderer {
 	}
 
 	protected draw(): void {
-		this.drawGrid();
-
-		// TEMPORARY
-		if (this.time === 1) return;
-		const nextFrame = () => {
-			requestAnimationFrame((now) => {
-				let delta = 0;
-				if (this.last != null) delta = now - this.last;
-				this.time += delta / 5000;
-				if (this.time > 1) this.time = 1;
-				this.render();
-				this.last = now;
-			});
-		};
-		if (this.time === 0) setTimeout(nextFrame, 500);
-		else nextFrame();
-	}
-
-	protected drawGrid() {
 		this.gl.useProgram(this.lineShaderProgram);
 		this.color = [0.2, 0.2, 0.2];
 		this.setUniforms(this.lineShaderProgram);
@@ -103,6 +82,16 @@ class TransformRenderer extends Renderer {
 
 		this.resetVertexAttributes(this.lineShaderProgram);
 		this.gl.useProgram(null);
+	}
+
+	protected frame(dt: number) {
+		if (this.finished) return;
+		this.time += dt / 5000;
+		if (this.time > 1) {
+			this.time = 1;
+			this.finished = true;
+		}
+		this.update();
 	}
 
 	private drawLines(start: number, length: number) {
