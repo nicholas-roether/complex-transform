@@ -1,11 +1,12 @@
 import {
-	WheelEvent,
 	MouseEvent,
 	useCallback,
 	PropsWithChildren,
-	useRef
+	useRef,
+	useEffect
 } from "react";
 import Viewport from "../render/viewport";
+import { recognizeGestures } from "../utils/gestures";
 
 interface ResponsiveViewportProps {
 	viewport: Viewport;
@@ -17,6 +18,7 @@ const ResponsiveViewport = ({
 }: PropsWithChildren<ResponsiveViewportProps>) => {
 	const dragging = useRef(false);
 	const divRef = useRef<HTMLDivElement>(null);
+	const touchesRef = useRef<TouchList>();
 
 	const getOffsetPos = useCallback(
 		(screenX: number, screenY: number): [number, number] => {
@@ -36,17 +38,25 @@ const ResponsiveViewport = ({
 		[viewport.height, viewport.translation, viewport.width]
 	);
 
-	const onWheel = useCallback(
-		(evt: WheelEvent) => {
-			const factor = Math.pow(2, evt.deltaY * -0.0008);
+	const zoomAroundPoint = useCallback(
+		(factor: number, pageX: number, pageY: number) => {
 			viewport.scaleBy(factor);
-			const offsetPos = getOffsetPos(evt.pageX, evt.pageY);
+			const offsetPos = getOffsetPos(pageX, pageY);
 			viewport.translate(
 				(1 - factor) * offsetPos[0],
 				(1 - factor) * offsetPos[1]
 			);
 		},
 		[getOffsetPos, viewport]
+	);
+
+	const onWheel = useCallback(
+		(evt: WheelEvent) => {
+			evt.preventDefault();
+			const factor = Math.pow(2, evt.deltaY * -0.0008);
+			zoomAroundPoint(factor, evt.pageX, evt.pageY);
+		},
+		[zoomAroundPoint]
 	);
 	const onMouseDown = useCallback((evt: MouseEvent) => {
 		evt.preventDefault();
@@ -67,9 +77,32 @@ const ResponsiveViewport = ({
 		},
 		[viewport]
 	);
+	const onTouchStart = useCallback((evt: TouchEvent) => {
+		evt.preventDefault();
+	}, []);
+	const onTouchMove = useCallback(
+		(evt: TouchEvent) => {
+			evt.preventDefault();
+			if (touchesRef.current) {
+				const gestures = recognizeGestures(
+					evt.changedTouches,
+					touchesRef.current
+				);
+				viewport.translate(...gestures.translation);
+				zoomAroundPoint(gestures.zoom, ...gestures.zoomCenter);
+			}
+			touchesRef.current = evt.touches;
+		},
+		[viewport, zoomAroundPoint]
+	);
+
+	useEffect(() => {
+		divRef.current?.addEventListener("wheel", onWheel);
+		divRef.current?.addEventListener("touchstart", onTouchStart);
+		divRef.current?.addEventListener("touchmove", onTouchMove);
+	}, [onTouchMove, onTouchStart, onWheel]);
 	return (
 		<div
-			onWheel={onWheel}
 			onMouseDown={onMouseDown}
 			onMouseUp={onMouseUp}
 			onMouseMove={onMouseMove}
