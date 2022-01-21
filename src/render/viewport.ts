@@ -1,10 +1,11 @@
 import ChangeNotifier from "../utils/change_notifier";
+import { Matrix, Point } from "../utils/geometry";
 
 class Viewport extends ChangeNotifier {
 	public readonly width: number;
 	public readonly height: number;
 	public static readonly BASE_SCALE = 0.25;
-	private _translation: [number, number] = [0, 0];
+	private _translation = Point.ORIGIN;
 	private _scale: number = 1;
 
 	constructor(width: number, height: number) {
@@ -14,23 +15,26 @@ class Viewport extends ChangeNotifier {
 	}
 
 	public translateX(dx: number) {
-		this._translation[0] += dx;
+		this._translation = this.translation.addX(dx);
 		this.notify();
 	}
 
 	public translateY(dy: number) {
-		this._translation[1] += dy;
+		this._translation = this.translation.addY(dy);
 		this.notify();
 	}
 
-	public translate(dx: number, dy: number) {
-		this._translation[0] += dx;
-		this._translation[1] += dy;
+	public translate(vec: Point): void;
+	public translate(dx: number, dy: number): void;
+	public translate(a1: Point | number, a2?: number) {
+		this._translation = this._translation.add(Point.from(a1, a2));
 		this.notify();
 	}
 
-	public moveTo(x: number, y: number) {
-		this._translation = [x, y];
+	public moveTo(pos: Point): void;
+	public moveTo(x: number, y: number): void;
+	public moveTo(a1: Point | number, a2?: number) {
+		this._translation = Point.from(a1, a2);
 		this.notify();
 	}
 
@@ -43,12 +47,15 @@ class Viewport extends ChangeNotifier {
 		this._scale = scale;
 		this.notify();
 	}
-
-	public toCoordSpace(cvsX: number, cvsY: number) {
+	public toCoordSpace(cvsPos: Point): Point;
+	public toCoordSpace(cvsX: number, cvsY: number): Point;
+	public toCoordSpace(a1: Point | number, a2?: number): Point {
 		throw new Error("Not implemented");
 	}
 
-	public toCanvasSpace(coordX: number, coordY: number) {
+	public toCanvasSpace(coorPos: Point): Point;
+	public toCanvasSpace(coordX: number, coordY: number): Point;
+	public toCanvasSpace(a1: Point | number, a2?: number): Point {
 		throw new Error("Not implemented");
 	}
 
@@ -64,26 +71,26 @@ class Viewport extends ChangeNotifier {
 		return this._scale;
 	}
 
-	public get screenspaceMatrix(): [number, number, number, number] {
+	public get screenspaceMatrix(): Matrix {
 		let widthFactor = 1 / this.aspectRatio;
 		let heightFactor = 1;
 		if (this.height > this.width) {
 			heightFactor = this.aspectRatio;
 			widthFactor = 1;
 		}
-		return [
+		return new Matrix(
 			this.scale * Viewport.BASE_SCALE * widthFactor,
 			0,
 			0,
 			this.scale * Viewport.BASE_SCALE * heightFactor
-		];
+		);
 	}
 
-	public get translationVector(): [number, number] {
-		return [
-			(2 * this.translation[0]) / this.width,
-			(-2 * this.translation[1]) / this.height
-		];
+	public get translationVector(): Point {
+		return new Point(
+			(2 * this.translation.x) / this.width,
+			(-2 * this.translation.y) / this.height
+		);
 	}
 }
 

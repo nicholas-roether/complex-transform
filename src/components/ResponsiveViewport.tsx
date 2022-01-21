@@ -5,6 +5,7 @@ import React, {
 	useEffect
 } from "react";
 import Viewport from "../render/viewport";
+import { Point } from "../utils/geometry";
 import { recognizeGestures } from "../utils/gestures";
 
 interface ResponsiveViewportProps {
@@ -20,31 +21,22 @@ const ResponsiveViewport = ({
 	const touchesRef = useRef<TouchList>();
 
 	const getOffsetPos = useCallback(
-		(screenX: number, screenY: number): [number, number] => {
+		(pagePos: Point): Point => {
 			if (!divRef.current)
 				throw new Error("responsive viewport div ref was null.");
-			return [
-				screenX -
-					divRef.current.offsetLeft -
-					viewport.translation[0] -
-					viewport.width / 2,
-				screenY -
-					divRef.current.offsetTop -
-					viewport.translation[1] -
-					viewport.height / 2
-			];
+			return pagePos
+				.subtract(divRef.current.offsetLeft, divRef.current.offsetTop)
+				.subtract(viewport.translation)
+				.subtract(viewport.width / 2, viewport.height / 2);
 		},
 		[viewport.height, viewport.translation, viewport.width]
 	);
 
 	const zoomAroundPoint = useCallback(
-		(factor: number, pageX: number, pageY: number) => {
+		(factor: number, pagePos: Point) => {
 			viewport.scaleBy(factor);
-			const offsetPos = getOffsetPos(pageX, pageY);
-			viewport.translate(
-				(1 - factor) * offsetPos[0],
-				(1 - factor) * offsetPos[1]
-			);
+			const offsetPos = getOffsetPos(pagePos);
+			viewport.translate(offsetPos.scale(1 - factor));
 		},
 		[getOffsetPos, viewport]
 	);
@@ -53,7 +45,7 @@ const ResponsiveViewport = ({
 		(evt: WheelEvent) => {
 			evt.preventDefault();
 			const factor = Math.pow(2, evt.deltaY * -0.0008);
-			zoomAroundPoint(factor, evt.pageX, evt.pageY);
+			zoomAroundPoint(factor, new Point(evt.pageX, evt.pageY));
 		},
 		[zoomAroundPoint]
 	);
@@ -87,8 +79,8 @@ const ResponsiveViewport = ({
 					evt.changedTouches,
 					touchesRef.current
 				);
-				viewport.translate(...gestures.translation);
-				zoomAroundPoint(gestures.zoom, ...gestures.zoomCenter);
+				viewport.translate(gestures.translation);
+				zoomAroundPoint(gestures.zoom, gestures.zoomCenter);
 			}
 			touchesRef.current = evt.touches;
 		},

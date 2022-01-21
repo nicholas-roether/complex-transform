@@ -2,6 +2,7 @@ import WebGLRenderer from "./webgl_renderer";
 import lineVert from "./shaders/line.vert.glsl";
 import lineFrag from "./shaders/line.frag.glsl";
 import Viewport from "./viewport";
+import { Point } from "../utils/geometry";
 
 interface BufferSectionMapping {
 	color: [r: number, g: number, b: number];
@@ -106,9 +107,17 @@ class TransformRenderer extends WebGLRenderer {
 
 	private static generateGridVertices(): GridVertexMesh {
 		const verticalLine = (x: number) =>
-			this.generateSegmentedLine([x, -halfSize], [x, halfSize], this.SEGMENTS);
+			this.generateSegmentedLine(
+				new Point(x, -halfSize),
+				new Point(x, halfSize),
+				this.SEGMENTS
+			);
 		const horizontalLine = (y: number) =>
-			this.generateSegmentedLine([-halfSize, y], [halfSize, y], this.SEGMENTS);
+			this.generateSegmentedLine(
+				new Point(-halfSize, y),
+				new Point(halfSize, y),
+				this.SEGMENTS
+			);
 
 		const halfSize = this.GRID_SIZE / 2;
 		const axisVertices: number[] = [...horizontalLine(0), ...verticalLine(0)];
@@ -144,18 +153,19 @@ class TransformRenderer extends WebGLRenderer {
 	}
 
 	private static generateSegmentedLine(
-		start: [x: number, y: number],
-		end: [x: number, y: number],
+		start: Point,
+		end: Point,
 		segments: number
 	): number[] {
 		const vertices: number[] = [];
-		const width = end[0] - start[0];
-		const height = end[1] - start[1];
+		const difference = end.subtract(start);
+		const width = difference.x;
+		const height = difference.y;
 		const step = 1 / segments;
 		for (let i = 0; i <= width * segments; i++) {
 			for (let j = 0; j <= height * segments; j++) {
-				const x = start[0] + i * step;
-				const y = start[1] + j * step;
+				const x = start.x + i * step;
+				const y = start.y + j * step;
 				vertices.push(x, y);
 			}
 		}

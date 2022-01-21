@@ -1,7 +1,9 @@
+import { Point } from "./geometry";
+
 interface Gestures {
-	translation: [number, number];
+	translation: Point;
 	zoom: number;
-	zoomCenter: [number, number];
+	zoomCenter: Point;
 }
 
 function getTouch(touches: Touch[], id: number): Touch | null {
@@ -12,17 +14,16 @@ function hasTouch(touches: Touch[], id: number): boolean {
 	return getTouch(touches, id) != null;
 }
 
-function averagePosition(touches: Touch[]): [number, number] {
-	const pos = touches.reduce<[number, number]>(
-		(acc, t) => [acc[0] + t.pageX, acc[1] + t.pageY],
-		[0, 0]
+function averagePosition(touches: Touch[]): Point {
+	const pos = touches.reduce<Point>(
+		(acc, t) => acc.add(t.pageX, t.pageY),
+		Point.ORIGIN
 	);
-	pos[0] /= touches.length;
-	pos[1] /= touches.length;
+	pos.scale(1 / touches.length);
 	return pos;
 }
 
-function averageDistance(touches: Touch[], x: number, y: number) {
+function averageDistance(touches: Touch[], x: number, y: number): number {
 	const acc = touches.reduce<number>(
 		(acc, t) => acc + Math.sqrt((t.pageX - x) ** 2 + (t.pageY - y) ** 2),
 		0
@@ -40,18 +41,18 @@ function recognizeGestures(
 	prevTouches = prevTouches.filter((t) => hasTouch(touches, t.identifier));
 
 	if (touches.length === 0)
-		return { translation: [0, 0], zoom: 1, zoomCenter: [0, 0] };
+		return { translation: Point.ORIGIN, zoom: 1, zoomCenter: Point.ORIGIN };
 
 	if (touches.length !== prevTouches.length)
 		console.warn("Something weird's going on in the gesture recognition!");
 
 	const avgPos = averagePosition(touches);
 	const prevAvgPos = averagePosition(prevTouches);
-	const avgDistance = averageDistance(touches, ...avgPos);
-	const prevAvgDistance = averageDistance(prevTouches, ...prevAvgPos);
+	const avgDistance = averageDistance(touches, ...avgPos.tuple);
+	const prevAvgDistance = averageDistance(prevTouches, ...prevAvgPos.tuple);
 
 	return {
-		translation: [avgPos[0] - prevAvgPos[0], avgPos[1] - prevAvgPos[1]],
+		translation: avgPos.subtract(prevAvgPos),
 		zoom: prevAvgDistance !== 0 ? avgDistance / prevAvgDistance : 1,
 		zoomCenter: avgPos
 	};
