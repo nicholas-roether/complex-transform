@@ -6,21 +6,21 @@ interface StackProps {
 	height: number | string;
 }
 
+const StackWrapper = styled.div`
+	position: relative;
+	top: 0;
+	left: 0;
+`;
+
+const StackElement = styled.div`
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+`;
+
 const Stack = ({ width, height, children }: PropsWithChildren<StackProps>) => {
-	const StackWrapper = styled.div`
-		position: relative;
-		top: 0;
-		left: 0;
-	`;
-
-	const StackElement = styled.div`
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-	`;
-
 	return (
 		<StackWrapper style={{ width, height }}>
 			{Children.map(children, (child) => (

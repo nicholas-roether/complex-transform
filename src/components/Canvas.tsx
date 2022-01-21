@@ -7,6 +7,10 @@ interface CanvasProps {
 	children?: (canvas: HTMLCanvasElement) => void;
 }
 
+const BlockCanvas = styled.canvas`
+	display: block;
+`;
+
 const Canvas = ({ width, height, children: callback }: CanvasProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -14,10 +18,6 @@ const Canvas = ({ width, height, children: callback }: CanvasProps) => {
 		if (!canvasRef.current) return console.error("WebGL canvas not found");
 		callback?.(canvasRef.current);
 	}, [callback, canvasRef]);
-
-	const BlockCanvas = styled.canvas`
-		display: block;
-	`;
 
 	return (
 		<BlockCanvas ref={canvasRef} width={width} height={height}>
