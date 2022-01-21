@@ -3,7 +3,7 @@ import ChangeNotifier from "../utils/change_notifier";
 class Viewport extends ChangeNotifier {
 	public readonly width: number;
 	public readonly height: number;
-	private static readonly BASE_SCALE = 0.25;
+	public static readonly BASE_SCALE = 0.25;
 	private _translation: [number, number] = [0, 0];
 	private _scale: number = 1;
 
@@ -44,16 +44,12 @@ class Viewport extends ChangeNotifier {
 		this.notify();
 	}
 
-	public toViewportSpace(
-		pos: [nomalizedX: number, normalizedY: number]
-	): [viewportX: number, viewportY: number] {
-		return [pos[0], pos[1] / this.aspectRatio];
+	public toCoordSpace(cvsX: number, cvsY: number) {
+		throw new Error("Not implemented");
 	}
 
-	public toNormalized(
-		pos: [viewportX: number, viewportY: number]
-	): [normalizedX: number, normalizedY: number] {
-		return [pos[0], pos[1] * this.aspectRatio];
+	public toCanvasSpace(coordX: number, coordY: number) {
+		throw new Error("Not implemented");
 	}
 
 	public get aspectRatio() {
