@@ -1,5 +1,4 @@
-import {
-	MouseEvent,
+import React, {
 	useCallback,
 	PropsWithChildren,
 	useRef,
@@ -58,7 +57,7 @@ const ResponsiveViewport = ({
 		},
 		[zoomAroundPoint]
 	);
-	const onMouseDown = useCallback((evt: MouseEvent) => {
+	const onMouseDown = useCallback((evt: React.MouseEvent) => {
 		evt.preventDefault();
 		if (divRef.current) divRef.current.style.cursor = "grabbing";
 		dragging.current = true;
@@ -69,7 +68,7 @@ const ResponsiveViewport = ({
 		dragging.current = false;
 	}, []);
 	const onMouseMove = useCallback(
-		(evt: MouseEvent) => {
+		(evt: React.MouseEvent) => {
 			evt.preventDefault();
 			if (dragging.current) {
 				viewport.translate(evt.movementX, evt.movementY);
@@ -100,14 +99,10 @@ const ResponsiveViewport = ({
 		divRef.current?.addEventListener("wheel", onWheel);
 		divRef.current?.addEventListener("touchstart", onTouchStart);
 		divRef.current?.addEventListener("touchmove", onTouchMove);
-	}, [onTouchMove, onTouchStart, onWheel]);
+		window.addEventListener("mouseup", onMouseUp);
+	}, [onMouseUp, onTouchMove, onTouchStart, onWheel]);
 	return (
-		<div
-			onMouseDown={onMouseDown}
-			onMouseUp={onMouseUp}
-			onMouseMove={onMouseMove}
-			ref={divRef}
-		>
+		<div onMouseDown={onMouseDown} onMouseMove={onMouseMove} ref={divRef}>
 			{children}
 		</div>
 	);
