@@ -1,3 +1,4 @@
+import Renderer from "./renderer";
 import Viewport from "./viewport";
 
 type ShaderSourceList = {
@@ -44,41 +45,25 @@ interface Attribute {
 	buffer: WebGLBuffer;
 }
 
-abstract class Renderer {
-	public readonly viewport: Viewport;
+abstract class WebGLRenderer extends Renderer {
 	protected readonly gl: WebGL2RenderingContext;
 
 	private readonly uniforms: Uniform[] = [];
 	private readonly attributeMap: Map<string, Attribute> = new Map();
-	private updateScheduled = false;
-	private lastFrame: DOMHighResTimeStamp | null = null;
-	private running = false;
 
 	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
-		this.viewport = viewport;
+		super(viewport);
 		this.gl = gl;
 		this.gl.enable(this.gl.BLEND);
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 		this.setDefaultUniforms();
-		viewport.addEventListener("change", () => this.update());
 	}
 
-	public start(): void {
-		this.running = true;
-		/*setTimeout( */ this.drawLoop() /* ) */;
+	protected clearScreen() {
+		this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+		this.gl.viewport(0, 0, this.viewport.width, this.viewport.height);
 	}
-
-	public stop(): void {
-		this.running = false;
-	}
-
-	public update(): void {
-		this.updateScheduled = true;
-	}
-
-	protected abstract draw(): void;
-
-	protected abstract frame(dt: number): void;
 
 	protected pushAttribute(attributeInfo: AttributeInfo) {
 		const attribute = {
@@ -117,11 +102,6 @@ abstract class Renderer {
 			if (location === -1) continue;
 			this.gl.disableVertexAttribArray(location);
 		}
-	}
-
-	protected clearScreen() {
-		this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 	}
 
 	protected createBuffer(): WebGLBuffer {
@@ -170,24 +150,6 @@ abstract class Renderer {
 		}
 	}
 
-	private drawLoop(ts?: DOMHighResTimeStamp) {
-		if (!this.running) return;
-		if (ts) {
-			if (this.lastFrame != null) {
-				const dt = ts - this.lastFrame;
-				this.frame(dt);
-			}
-			this.lastFrame = ts;
-		}
-		if (this.updateScheduled) {
-			this.clearScreen();
-			this.gl.viewport(0, 0, this.viewport.width, this.viewport.height);
-			this.draw();
-			this.updateScheduled = false;
-		}
-		requestAnimationFrame((ts) => this.drawLoop(ts));
-	}
-
 	private compileShader(type: number, source: string): WebGLShader {
 		const shader = this.gl.createShader(type);
 		if (!shader) {
@@ -224,6 +186,6 @@ abstract class Renderer {
 	}
 }
 
-export default Renderer;
+export default WebGLRenderer;
 export { ShaderCompilationError };
 export type { ShaderSourceList };

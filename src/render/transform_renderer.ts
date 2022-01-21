@@ -1,4 +1,4 @@
-import Renderer from "./webgl_renderer";
+import WebGLRenderer from "./webgl_renderer";
 import lineVert from "./shaders/line.vert.glsl";
 import lineFrag from "./shaders/line.frag.glsl";
 import Viewport from "./viewport";
@@ -13,7 +13,7 @@ interface GridVertexMesh {
 	segmentLengths: number[];
 }
 
-class TransformRenderer extends Renderer {
+class TransformRenderer extends WebGLRenderer {
 	private static readonly GRID_SIZE = 60;
 	private static readonly SUBDIVISION = 5;
 	private static readonly SEGMENTS = 80;

@@ -1,4 +1,6 @@
-class Viewport extends EventTarget {
+import ChangeNotifier from "../utils/change_notifier";
+
+class Viewport extends ChangeNotifier {
 	public readonly width: number;
 	public readonly height: number;
 	private static readonly BASE_SCALE = 0.25;
@@ -13,33 +15,33 @@ class Viewport extends EventTarget {
 
 	public translateX(dx: number) {
 		this._translation[0] += dx;
-		this.changed();
+		this.notify();
 	}
 
 	public translateY(dy: number) {
 		this._translation[1] += dy;
-		this.changed();
+		this.notify();
 	}
 
 	public translate(dx: number, dy: number) {
 		this._translation[0] += dx;
 		this._translation[1] += dy;
-		this.changed();
+		this.notify();
 	}
 
 	public moveTo(x: number, y: number) {
 		this._translation = [x, y];
-		this.changed();
+		this.notify();
 	}
 
 	public scaleBy(factor: number) {
 		this._scale *= factor;
-		this.changed();
+		this.notify();
 	}
 
 	public setScale(scale: number) {
 		this._scale = scale;
-		this.changed();
+		this.notify();
 	}
 
 	public toViewportSpace(
@@ -86,10 +88,6 @@ class Viewport extends EventTarget {
 			(2 * this.translation[0]) / this.width,
 			(-2 * this.translation[1]) / this.height
 		];
-	}
-
-	protected changed() {
-		this.dispatchEvent(new Event("change"));
 	}
 }
 
