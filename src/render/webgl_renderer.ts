@@ -175,13 +175,16 @@ abstract class WebGLRenderer extends Renderer {
 				this.gl.uniformMatrix2fv(
 					location,
 					false,
-					this.viewport.screenspaceMatrix.tuple
+					this.viewport.normalizedToCoordSpaceMatrix.tuple
 				)
 		});
 		this.pushUniform({
 			name: "uScreenspaceOffset",
 			setter: (location) =>
-				this.gl.uniform2fv(location, this.viewport.translationVector.tuple)
+				this.gl.uniform2fv(
+					location,
+					this.viewport.normalizedTranslationVector.tuple
+				)
 		});
 	}
 }

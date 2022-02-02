@@ -20,34 +20,13 @@ const ResponsiveViewport = ({
 	const divRef = useRef<HTMLDivElement>(null);
 	const touchesRef = useRef<TouchList>();
 
-	const getOffsetPos = useCallback(
-		(pagePos: Point): Point => {
-			if (!divRef.current)
-				throw new Error("responsive viewport div ref was null.");
-			return pagePos
-				.subtract(divRef.current.offsetLeft, divRef.current.offsetTop)
-				.subtract(viewport.translation)
-				.subtract(viewport.width / 2, viewport.height / 2);
-		},
-		[viewport.height, viewport.translation, viewport.width]
-	);
-
-	const zoomAroundPoint = useCallback(
-		(factor: number, pagePos: Point) => {
-			viewport.scaleBy(factor);
-			const offsetPos = getOffsetPos(pagePos);
-			viewport.translate(offsetPos.scale(1 - factor));
-		},
-		[getOffsetPos, viewport]
-	);
-
 	const onWheel = useCallback(
 		(evt: WheelEvent) => {
 			evt.preventDefault();
 			const factor = Math.pow(2, evt.deltaY * -0.0008);
-			zoomAroundPoint(factor, new Point(evt.pageX, evt.pageY));
+			viewport.zoom(factor, new Point(evt.offsetX, evt.offsetY));
 		},
-		[zoomAroundPoint]
+		[viewport]
 	);
 	const onMouseDown = useCallback((evt: React.MouseEvent) => {
 		evt.preventDefault();
@@ -70,6 +49,7 @@ const ResponsiveViewport = ({
 	);
 	const onTouchStart = useCallback((evt: TouchEvent) => {
 		evt.preventDefault();
+		touchesRef.current = evt.touches;
 	}, []);
 	const onTouchMove = useCallback(
 		(evt: TouchEvent) => {
@@ -79,12 +59,13 @@ const ResponsiveViewport = ({
 					evt.changedTouches,
 					touchesRef.current
 				);
+				console.log(evt.changedTouches.length, touchesRef.current.length);
 				viewport.translate(gestures.translation);
-				zoomAroundPoint(gestures.zoom, gestures.zoomCenter);
+				viewport.zoom(gestures.zoom, gestures.zoomCenter);
 			}
 			touchesRef.current = evt.touches;
 		},
-		[viewport, zoomAroundPoint]
+		[viewport]
 	);
 
 	useEffect(() => {

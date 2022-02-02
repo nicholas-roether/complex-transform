@@ -19,8 +19,7 @@ function averagePosition(touches: Touch[]): Point {
 		(acc, t) => acc.add(t.pageX, t.pageY),
 		Point.ORIGIN
 	);
-	pos.scale(1 / touches.length);
-	return pos;
+	return pos.scale(1 / touches.length);
 }
 
 function averageDistance(touches: Touch[], x: number, y: number): number {
@@ -40,7 +39,7 @@ function recognizeGestures(
 	touches = touches.filter((t) => hasTouch(prevTouches, t.identifier));
 	prevTouches = prevTouches.filter((t) => hasTouch(touches, t.identifier));
 
-	if (touches.length === 0)
+	if (touches.length === 0 || prevTouches.length === 0)
 		return { translation: Point.ORIGIN, zoom: 1, zoomCenter: Point.ORIGIN };
 
 	if (touches.length !== prevTouches.length)
@@ -53,7 +52,10 @@ function recognizeGestures(
 
 	return {
 		translation: avgPos.subtract(prevAvgPos),
-		zoom: prevAvgDistance !== 0 ? avgDistance / prevAvgDistance : 1,
+		zoom:
+			touches.length >= 2 && prevTouches.length >= 2
+				? avgDistance / prevAvgDistance
+				: 1,
 		zoomCenter: avgPos
 	};
 }

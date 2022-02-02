@@ -1,5 +1,7 @@
 class Point {
 	public static readonly ORIGIN = new Point(0, 0);
+	public static readonly UNIT_X = new Point(1, 0);
+	public static readonly UNIT_Y = new Point(0, 1);
 
 	public readonly x: number;
 	public readonly y: number;

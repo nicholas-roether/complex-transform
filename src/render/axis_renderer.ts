@@ -7,7 +7,12 @@ class AxisRenderer extends Ctx2DRenderer {
 	protected draw(): void {
 		this.ctx.fillStyle = "#fff";
 		this.ctx.beginPath();
-		this.ctx.arc(...this.viewport.toCanvasSpace(1, 1).tuple, 2, 0, 2 * Math.PI);
+		this.ctx.arc(
+			...this.viewport.coordToCanvasSpace(0, 0).tuple,
+			2,
+			0,
+			2 * Math.PI
+		);
 		this.ctx.fill();
 		// this.ctx.strokeStyle = "#fff";
 		// this.ctx.lineWidth = 2;

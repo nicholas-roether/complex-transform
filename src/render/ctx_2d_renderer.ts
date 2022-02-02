@@ -11,7 +11,6 @@ abstract class Ctx2DRenderer extends Renderer {
 
 	protected clearScreen(): void {
 		this.ctx.fillStyle = "#000";
-		console.log("clear");
 		this.ctx.clearRect(0, 0, this.viewport.width, this.viewport.height);
 	}
 }
