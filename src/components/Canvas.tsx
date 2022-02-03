@@ -22,8 +22,8 @@ const Canvas = ({ width, height, children: callback }: CanvasProps) => {
 	return (
 		<BlockCanvas
 			ref={canvasRef}
-			width={width * /* window.devicePixelRatio */ 2}
-			height={height * /* window.devicePixelRatio */ 2}
+			width={width * window.devicePixelRatio}
+			height={height * window.devicePixelRatio}
 			style={{
 				width,
 				height

@@ -12,8 +12,7 @@ const App = () => {
 	const viewport = new Viewport(
 		window.innerWidth,
 		window.innerHeight,
-		// window.devicePixelRatio
-		2
+		window.devicePixelRatio
 	);
 	viewport.setScale(2);
 	const rendererController = new RendererController(viewport);
