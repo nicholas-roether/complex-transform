@@ -11,6 +11,7 @@ function numToString(number: number): string {
 }
 
 class AxisRenderer extends Ctx2DRenderer {
+	private readonly rendererController;
 	private readonly numSubdivs;
 	private readonly tickLength;
 	private readonly tickLabelDist;
@@ -20,6 +21,7 @@ class AxisRenderer extends Ctx2DRenderer {
 		ctx: CanvasRenderingContext2D
 	) {
 		super(rendererController.viewport, ctx);
+		this.rendererController = rendererController;
 		this.numSubdivs = 5 / this.viewport.pixelDensity;
 		this.tickLength = 5 * this.viewport.pixelDensity;
 		this.tickLabelDist = 20 * this.viewport.pixelDensity;
@@ -41,6 +43,7 @@ class AxisRenderer extends Ctx2DRenderer {
 	}
 
 	protected draw(): void {
+		if (!this.rendererController.axesShown) return;
 		this.ctx.strokeStyle = "#fff";
 		this.ctx.lineWidth = 2;
 		this.ctx.beginPath();

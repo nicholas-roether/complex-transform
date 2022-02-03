@@ -45,7 +45,7 @@ const ResponsiveViewport = ({
 		}
 	}, []);
 	const onMouseMove = useCallback(
-		(evt: React.MouseEvent) => {
+		(evt: MouseEvent) => {
 			evt.preventDefault();
 			if (dragging.current) {
 				viewport.translate(
@@ -84,9 +84,10 @@ const ResponsiveViewport = ({
 		divRef.current?.addEventListener("touchstart", onTouchStart);
 		divRef.current?.addEventListener("touchmove", onTouchMove);
 		window.addEventListener("mouseup", onMouseUp);
-	}, [onMouseUp, onTouchMove, onTouchStart, onWheel]);
+		document.body.addEventListener("mousemove", onMouseMove);
+	}, [onMouseMove, onMouseUp, onTouchMove, onTouchStart, onWheel]);
 	return (
-		<div onMouseDown={onMouseDown} onMouseMove={onMouseMove} ref={divRef}>
+		<div onMouseDown={onMouseDown} ref={divRef}>
 			{children}
 		</div>
 	);

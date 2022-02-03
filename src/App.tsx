@@ -2,7 +2,6 @@ import { CssBaseline } from "@mui/material";
 import Viewport from "./render/viewport";
 import RendererController from "./render/renderer_controller";
 import TransformationView from "./components/TransformationView";
-import { useEffect } from "react";
 
 const App = () => {
 	const viewport = new Viewport(
@@ -12,9 +11,6 @@ const App = () => {
 	);
 	viewport.setScale(2);
 	const rendererController = new RendererController(viewport);
-	useEffect(() => {
-		rendererController.animateTo(1);
-	});
 	return (
 		<>
 			<CssBaseline />
