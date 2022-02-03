@@ -1,9 +1,10 @@
+import Renderer from "../render/renderer";
 import Canvas from "./Canvas";
 
 interface WebGLCanvasProps {
 	width: number;
 	height: number;
-	children?: (gl: WebGL2RenderingContext) => void;
+	children?: (gl: WebGL2RenderingContext) => Renderer | null | undefined;
 }
 
 const WebGLCanvas = ({
@@ -19,7 +20,7 @@ const WebGLCanvas = ({
 					"WebGL rendering context creation failed. Make sure your browser supports WebGL 2.0."
 				);
 			}
-			callback?.(gl);
+			return callback?.(gl);
 		}}
 	</Canvas>
 );

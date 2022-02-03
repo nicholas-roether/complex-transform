@@ -1,23 +1,27 @@
 import styled from "@emotion/styled";
 import React, { useRef } from "react";
+import Renderer from "../render/renderer";
 
 interface CanvasProps {
 	width: number;
 	height: number;
-	children?: (canvas: HTMLCanvasElement) => void;
+	children?: (canvas: HTMLCanvasElement) => Renderer | null | undefined;
 }
 
 const BlockCanvas = styled.canvas`
 	display: block;
 `;
 
-const Canvas = ({ width, height, children: callback }: CanvasProps) => {
+const Canvas = ({ width, height, children: createRenderer }: CanvasProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const renderer = useRef<Renderer | null>(null);
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return console.error("WebGL canvas not found");
-		callback?.(canvasRef.current);
-	}, [callback, canvasRef]);
+		renderer.current?.stop();
+		renderer.current = createRenderer?.(canvasRef.current) ?? null;
+		renderer.current?.run();
+	}, [canvasRef, createRenderer]);
 
 	return (
 		<BlockCanvas

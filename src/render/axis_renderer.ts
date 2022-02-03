@@ -1,25 +1,35 @@
 import { Point } from "../utils/geometry";
 import Ctx2DRenderer from "./ctx_2d_renderer";
 import RendererController from "./renderer_controller";
-// import Viewport from "./viewport";
+
+function numToString(number: number): string {
+	const notation = Math.abs(number) <= 0.0001 ? "scientific" : "standard";
+	return number.toLocaleString("fullwide", {
+		maximumSignificantDigits: 2,
+		notation
+	});
+}
 
 class AxisRenderer extends Ctx2DRenderer {
-	private static readonly NUM_SUBDIVS = 10;
-	private static readonly TICK_LENGTH = 5;
-	private static readonly TICK_LABEL_DIST = 20;
+	private readonly numSubdivs;
+	private readonly tickLength;
+	private readonly tickLabelDist;
 
 	constructor(
 		rendererController: RendererController,
 		ctx: CanvasRenderingContext2D
 	) {
 		super(rendererController.viewport, ctx);
+		this.numSubdivs = 5 / this.viewport.pixelDensity;
+		this.tickLength = 5 * this.viewport.pixelDensity;
+		this.tickLabelDist = 20 * this.viewport.pixelDensity;
 		rendererController.onChange("axes", () => this.update());
 	}
 
 	private getTickSpacing(): number {
 		const ideal = Math.min(
-			this.viewport.coordWidth / AxisRenderer.NUM_SUBDIVS,
-			this.viewport.coordHeight / AxisRenderer.NUM_SUBDIVS
+			this.viewport.coordWidth / this.numSubdivs,
+			this.viewport.coordHeight / this.numSubdivs
 		);
 
 		const powOfTen = 10 ** Math.floor(Math.log10(ideal));
@@ -59,6 +69,10 @@ class AxisRenderer extends Ctx2DRenderer {
 		const yTickmarkStart = Math.round(-numTickmarksY - tickTranslation.y);
 		const yTickmarkEnd = Math.round(numTickmarksY - tickTranslation.y);
 
+		const fontSize = 13 * this.viewport.pixelDensity;
+		// TODO adjust font
+		this.ctx.font = `${fontSize}px sans-serif`;
+
 		for (let i = xTickmarkStart; i <= xTickmarkEnd; i++) {
 			if (i === 0) continue;
 			const pos = this.viewport.coordToCanvasSpace(i * tickSpacing, 0);
@@ -66,9 +80,9 @@ class AxisRenderer extends Ctx2DRenderer {
 			this.ctx.fillStyle = "#fff";
 			this.ctx.textAlign = "center";
 			this.ctx.fillText(
-				(i * tickSpacing).toLocaleString("fullwide"),
+				numToString(i * tickSpacing),
 				pos.x,
-				pos.y + AxisRenderer.TICK_LABEL_DIST
+				pos.y + this.tickLabelDist
 			);
 		}
 		for (let i = yTickmarkStart; i <= yTickmarkEnd; i++) {
@@ -76,11 +90,11 @@ class AxisRenderer extends Ctx2DRenderer {
 			const pos = this.viewport.coordToCanvasSpace(0, i * tickSpacing);
 			this.drawTickmark(pos.x, pos.y, "horizontal");
 			this.ctx.fillStyle = "#fff";
-			this.ctx.textAlign = "center";
+			this.ctx.textAlign = "right";
 			this.ctx.textBaseline = "middle";
 			this.ctx.fillText(
-				(i * tickSpacing).toLocaleString("fullwide") + "i",
-				pos.x - AxisRenderer.TICK_LABEL_DIST,
+				numToString(i * tickSpacing) + "i",
+				pos.x - this.tickLabelDist,
 				pos.y
 			);
 		}
@@ -92,8 +106,8 @@ class AxisRenderer extends Ctx2DRenderer {
 		direction: "vertical" | "horizontal"
 	) {
 		const dirVec = direction === "vertical" ? Point.UNIT_Y : Point.UNIT_X;
-		const start = dirVec.scale(-AxisRenderer.TICK_LENGTH).add(x, y);
-		const end = dirVec.scale(AxisRenderer.TICK_LENGTH).add(x, y);
+		const start = dirVec.scale(-this.tickLength).add(x, y);
+		const end = dirVec.scale(this.tickLength).add(x, y);
 
 		this.ctx.strokeStyle = "#fff";
 		this.ctx.lineWidth = 2;

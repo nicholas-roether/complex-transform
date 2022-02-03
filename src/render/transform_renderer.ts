@@ -38,14 +38,16 @@ class TransformRenderer extends WebGLRenderer {
 
 	private readonly lineShaderProgram: WebGLProgram;
 	private color: [r: number, g: number, b: number] = [0, 0, 0];
-	private finished = false;
-	private time: number = 0;
+	// private finished = false;
+	// private time: number = 0;
+	private readonly controller: RendererController;
 
 	constructor(
 		rendererController: RendererController,
 		gl: WebGL2RenderingContext
 	) {
 		super(rendererController.viewport, gl);
+		this.controller = rendererController;
 		rendererController.onChange("transform", () => this.update());
 		this.lineShaderProgram = this.compileProgram([
 			{ type: this.gl.VERTEX_SHADER, source: lineVert },
@@ -53,7 +55,8 @@ class TransformRenderer extends WebGLRenderer {
 		]);
 		this.pushUniform({
 			name: "uTime",
-			setter: (location) => this.gl.uniform1f(location, this.time)
+			setter: (location) =>
+				this.gl.uniform1f(location, this.controller.animationTime)
 		});
 		this.pushUniform({
 			name: "uColor",
@@ -90,13 +93,13 @@ class TransformRenderer extends WebGLRenderer {
 	}
 
 	protected frame(dt: number) {
-		if (this.finished) return;
-		this.time += dt / 5000;
-		if (this.time > 1) {
-			this.time = 1;
-			this.finished = true;
-		}
-		this.update();
+		// if (this.finished) return;
+		// this.time += dt / 5000;
+		// if (this.time > 1) {
+		// 	this.time = 1;
+		// 	this.finished = true;
+		// }
+		// this.update();
 	}
 
 	private drawLines(start: number, length: number) {

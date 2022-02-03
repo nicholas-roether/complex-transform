@@ -1,15 +1,16 @@
+import Renderer from "../render/renderer";
 import Canvas from "./Canvas";
 
 interface Ctx2DCanvasProps {
 	width: number;
 	height: number;
-	children?: (ctx: CanvasRenderingContext2D) => void;
+	children?: (ctx: CanvasRenderingContext2D) => Renderer | null | undefined;
 }
 
 const Ctx2DCanvas = ({
 	width,
 	height,
-	children: callback
+	children: createRenderer
 }: Ctx2DCanvasProps) => (
 	<Canvas width={width} height={height}>
 		{(canvas) => {
@@ -19,7 +20,7 @@ const Ctx2DCanvas = ({
 					"2D rendering context creation failed. Make sure you are using a modern browser."
 				);
 			}
-			callback?.(ctx);
+			return createRenderer?.(ctx);
 		}}
 	</Canvas>
 );

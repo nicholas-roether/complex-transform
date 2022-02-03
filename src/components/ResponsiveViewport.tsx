@@ -31,14 +31,18 @@ const ResponsiveViewport = ({
 		[viewport]
 	);
 	const onMouseDown = useCallback((evt: React.MouseEvent) => {
-		evt.preventDefault();
-		if (divRef.current) divRef.current.style.cursor = "grabbing";
-		dragging.current = true;
+		if (evt.button === 0) {
+			evt.preventDefault();
+			if (divRef.current) divRef.current.style.cursor = "grabbing";
+			dragging.current = true;
+		}
 	}, []);
 	const onMouseUp = useCallback((evt: MouseEvent) => {
-		evt.preventDefault();
-		if (divRef.current) divRef.current.style.cursor = "default";
-		dragging.current = false;
+		if (evt.button === 0) {
+			evt.preventDefault();
+			if (divRef.current) divRef.current.style.cursor = "default";
+			dragging.current = false;
+		}
 	}, []);
 	const onMouseMove = useCallback(
 		(evt: React.MouseEvent) => {
