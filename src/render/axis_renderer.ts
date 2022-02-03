@@ -1,11 +1,20 @@
 import { Point } from "../utils/geometry";
 import Ctx2DRenderer from "./ctx_2d_renderer";
+import RendererController from "./renderer_controller";
 // import Viewport from "./viewport";
 
 class AxisRenderer extends Ctx2DRenderer {
 	private static readonly NUM_SUBDIVS = 10;
 	private static readonly TICK_LENGTH = 5;
 	private static readonly TICK_LABEL_DIST = 20;
+
+	constructor(
+		rendererController: RendererController,
+		ctx: CanvasRenderingContext2D
+	) {
+		super(rendererController.viewport, ctx);
+		rendererController.onChange("axes", () => this.update());
+	}
 
 	private getTickSpacing(): number {
 		const ideal = Math.min(

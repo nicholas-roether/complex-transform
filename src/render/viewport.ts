@@ -3,15 +3,18 @@ import { Matrix, Point } from "../utils/geometry";
 
 class Viewport extends ChangeNotifier {
 	private static readonly BASE_SCALE = 0.25;
+
+	public readonly pixelDensity: number;
 	private _width: number;
 	private _height: number;
 	private _translation = Point.ORIGIN;
 	private _scale: number = 1;
 
-	constructor(width: number, height: number) {
+	constructor(frameWidth: number, frameHeight: number, pixelDensity = 1) {
 		super();
-		this._width = width;
-		this._height = height;
+		this._width = frameWidth * pixelDensity;
+		this._height = frameHeight * pixelDensity;
+		this.pixelDensity = pixelDensity;
 	}
 
 	public get width(): number {
@@ -20,6 +23,14 @@ class Viewport extends ChangeNotifier {
 
 	public get height(): number {
 		return this._height;
+	}
+
+	public get frameWidth(): number {
+		return this.width / this.pixelDensity;
+	}
+
+	public get frameHeight(): number {
+		return this.height / this.pixelDensity;
 	}
 
 	public get translation(): Point {
@@ -31,15 +42,15 @@ class Viewport extends ChangeNotifier {
 	}
 
 	public get coordWidth(): number {
-		return this.width / this.coordToScreenFactor;
+		return this.width / this.coordToFrameFactor;
 	}
 
 	public get coordHeight(): number {
-		return this.height / this.coordToScreenFactor;
+		return this.height / this.coordToFrameFactor;
 	}
 
 	public get coordTranslation(): Point {
-		const scaled = this.translation.scale(1 / this.coordToScreenFactor);
+		const scaled = this.translation.scale(1 / this.coordToFrameFactor);
 		return new Point(scaled.x, -scaled.y);
 	}
 
@@ -47,7 +58,7 @@ class Viewport extends ChangeNotifier {
 		return this.width > this.height ? this.height : this.width;
 	}
 
-	private get coordToScreenFactor(): number {
+	private get coordToFrameFactor(): number {
 		return this.smallestSide * Viewport.BASE_SCALE * this.scale;
 	}
 
@@ -57,7 +68,7 @@ class Viewport extends ChangeNotifier {
 		const pos = Point.from(a1, a2);
 		return new Point(pos.x, -pos.y)
 			.subtract(this.width / 2, -this.height / 2)
-			.scale(1 / this.coordToScreenFactor)
+			.scale(1 / this.coordToFrameFactor)
 			.subtract(this.coordTranslation.x, this.coordTranslation.y);
 	}
 
@@ -67,7 +78,7 @@ class Viewport extends ChangeNotifier {
 		const pos = Point.from(a1, a2);
 		return new Point(pos.x, -pos.y)
 			.add(this.coordTranslation.x, -this.coordTranslation.y)
-			.scale(this.coordToScreenFactor)
+			.scale(this.coordToFrameFactor)
 			.add(this.width / 2, this.height / 2);
 
 		// TODO invert y axis canvas <--> coord!
@@ -91,6 +102,13 @@ class Viewport extends ChangeNotifier {
 			(this.coordWidth * pos.x) / 2,
 			(this.coordHeight * pos.y) / 2
 		);
+	}
+
+	public frameToCanvasSpace(pos: Point): Point;
+	public frameToCanvasSpace(x: number, y: number): Point;
+	public frameToCanvasSpace(a1: Point | number, a2?: number) {
+		const pos = Point.from(a1, a2);
+		return pos.scale(this.pixelDensity);
 	}
 
 	public resize(width: number, height: number) {

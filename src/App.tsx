@@ -6,24 +6,37 @@ import ResponsiveViewport from "./components/ResponsiveViewport";
 import Stack from "./components/Stack";
 import Ctx2DCanvas from "./components/Ctx2DCanvas";
 import AxisRenderer from "./render/axis_renderer";
+import RendererController from "./render/renderer_controller";
 
 const App = () => {
-	const viewport = new Viewport(window.innerWidth, window.innerHeight);
+	const viewport = new Viewport(
+		window.innerWidth,
+		window.innerHeight,
+		// window.devicePixelRatio
+		2
+	);
 	viewport.setScale(2);
+	const rendererController = new RendererController(viewport);
 	return (
 		<>
 			<CssBaseline />
 			<ResponsiveViewport viewport={viewport}>
-				<Stack width={viewport.width} height={viewport.height}>
-					<WebGLCanvas width={viewport.width} height={viewport.height}>
+				<Stack width={viewport.frameWidth} height={viewport.frameHeight}>
+					<WebGLCanvas
+						width={viewport.frameWidth}
+						height={viewport.frameHeight}
+					>
 						{(gl) => {
-							const renderer = new TransformRenderer(viewport, gl);
+							const renderer = new TransformRenderer(rendererController, gl);
 							renderer.run();
 						}}
 					</WebGLCanvas>
-					<Ctx2DCanvas width={viewport.width} height={viewport.height}>
+					<Ctx2DCanvas
+						width={viewport.frameWidth}
+						height={viewport.frameHeight}
+					>
 						{(ctx) => {
-							const renderer = new AxisRenderer(viewport, ctx);
+							const renderer = new AxisRenderer(rendererController, ctx);
 							renderer.run();
 						}}
 					</Ctx2DCanvas>

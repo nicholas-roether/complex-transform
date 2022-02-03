@@ -2,8 +2,8 @@ import styled from "@emotion/styled";
 import React, { useRef } from "react";
 
 interface CanvasProps {
-	width?: number;
-	height?: number;
+	width: number;
+	height: number;
 	children?: (canvas: HTMLCanvasElement) => void;
 }
 
@@ -20,7 +20,15 @@ const Canvas = ({ width, height, children: callback }: CanvasProps) => {
 	}, [callback, canvasRef]);
 
 	return (
-		<BlockCanvas ref={canvasRef} width={width} height={height}>
+		<BlockCanvas
+			ref={canvasRef}
+			width={width * /* window.devicePixelRatio */ 2}
+			height={height * /* window.devicePixelRatio */ 2}
+			style={{
+				width,
+				height
+			}}
+		>
 			Canvas rendering is not supported by your browser.
 		</BlockCanvas>
 	);

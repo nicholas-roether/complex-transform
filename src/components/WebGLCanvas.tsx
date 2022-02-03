@@ -1,8 +1,8 @@
 import Canvas from "./Canvas";
 
 interface WebGLCanvasProps {
-	width?: number;
-	height?: number;
+	width: number;
+	height: number;
 	children?: (gl: WebGL2RenderingContext) => void;
 }
 

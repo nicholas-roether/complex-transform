@@ -1,8 +1,8 @@
 import Canvas from "./Canvas";
 
 interface Ctx2DCanvasProps {
-	width?: number;
-	height?: number;
+	width: number;
+	height: number;
 	children?: (ctx: CanvasRenderingContext2D) => void;
 }
 

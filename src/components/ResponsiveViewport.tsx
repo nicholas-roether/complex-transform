@@ -5,7 +5,6 @@ import React, {
 	useEffect
 } from "react";
 import Viewport from "../render/viewport";
-import { Point } from "../utils/geometry";
 import { recognizeGestures } from "../utils/gestures";
 
 interface ResponsiveViewportProps {
@@ -24,7 +23,10 @@ const ResponsiveViewport = ({
 		(evt: WheelEvent) => {
 			evt.preventDefault();
 			const factor = Math.pow(2, evt.deltaY * -0.0008);
-			viewport.zoom(factor, new Point(evt.offsetX, evt.offsetY));
+			viewport.zoom(
+				factor,
+				viewport.frameToCanvasSpace(evt.offsetX, evt.offsetY)
+			);
 		},
 		[viewport]
 	);
@@ -42,7 +44,9 @@ const ResponsiveViewport = ({
 		(evt: React.MouseEvent) => {
 			evt.preventDefault();
 			if (dragging.current) {
-				viewport.translate(evt.movementX, evt.movementY);
+				viewport.translate(
+					viewport.frameToCanvasSpace(evt.movementX, evt.movementY)
+				);
 			}
 		},
 		[viewport]
@@ -60,8 +64,11 @@ const ResponsiveViewport = ({
 					touchesRef.current
 				);
 				console.log(evt.changedTouches.length, touchesRef.current.length);
-				viewport.translate(gestures.translation);
-				viewport.zoom(gestures.zoom, gestures.zoomCenter);
+				viewport.translate(viewport.frameToCanvasSpace(gestures.translation));
+				viewport.zoom(
+					gestures.zoom,
+					viewport.frameToCanvasSpace(gestures.zoomCenter)
+				);
 			}
 			touchesRef.current = evt.touches;
 		},

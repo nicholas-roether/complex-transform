@@ -1,8 +1,8 @@
 import WebGLRenderer from "./webgl_renderer";
 import lineVert from "./shaders/line.vert.glsl";
 import lineFrag from "./shaders/line.frag.glsl";
-import Viewport from "./viewport";
 import { Point } from "../utils/geometry";
+import RendererController from "./renderer_controller";
 
 interface BufferSectionMapping {
 	color: [r: number, g: number, b: number];
@@ -41,8 +41,12 @@ class TransformRenderer extends WebGLRenderer {
 	private finished = false;
 	private time: number = 0;
 
-	constructor(viewport: Viewport, gl: WebGL2RenderingContext) {
-		super(viewport, gl);
+	constructor(
+		rendererController: RendererController,
+		gl: WebGL2RenderingContext
+	) {
+		super(rendererController.viewport, gl);
+		rendererController.onChange("transform", () => this.update());
 		this.lineShaderProgram = this.compileProgram([
 			{ type: this.gl.VERTEX_SHADER, source: lineVert },
 			{ type: this.gl.FRAGMENT_SHADER, source: lineFrag }
