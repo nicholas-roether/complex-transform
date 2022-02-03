@@ -132,8 +132,7 @@ const PlaybackControls = ({
 				onChange={onSeek}
 				sx={(theme: Theme) => ({
 					flex: 1,
-					marginLeft: theme.spacing(2),
-					marginRight: theme.spacing(3)
+					margin: theme.spacing(0, 2)
 				})}
 				components={components}
 			/>
