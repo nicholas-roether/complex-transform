@@ -26,6 +26,7 @@ import {
 } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import RendererController from "../render/renderer_controller";
+import { StackElement } from "./Stack";
 
 interface AnimationControlsProps {
 	rendererController: RendererController;
@@ -117,10 +118,10 @@ const PlaybackControls = ({
 					<PlayIcon fontSize="large" />
 				)}
 			</IconButton>
-			<IconButton onClick={onRewindClick}>
+			<IconButton onClick={onRewindClick} disabled={time === 0}>
 				<RewindIcon fontSize="large" />
 			</IconButton>
-			<IconButton onClick={onForwardClick}>
+			<IconButton onClick={onForwardClick} disabled={time === 1}>
 				<ForwardIcon fontSize="large" />
 			</IconButton>
 			<Slider
@@ -182,18 +183,33 @@ const AnimationControls = ({ rendererController }: AnimationControlsProps) => {
 	}, []);
 
 	return (
-		<Box display="flex" flexDirection="column" alignItems="flex-end">
-			<Grow in={showMenu}>
-				<Box mb={2}>
-					<AnimationMenu rendererController={rendererController} />
-				</Box>
-			</Grow>
-			<PlaybackControls
-				rendererController={rendererController}
-				showMenu={showMenu}
-				onToggleMenu={onToggleMenu}
-			/>
-		</Box>
+		<>
+			<StackElement
+				// FIXME this is not great; maybe find a better positioning method
+				right="calc(50% - min(400px, 47.5vw))"
+				sx={(theme) => ({ bottom: theme.spacing(16) })}
+			>
+				<Grow in={showMenu} mountOnEnter unmountOnExit>
+					<Box>
+						<AnimationMenu rendererController={rendererController} />
+					</Box>
+				</Grow>
+			</StackElement>
+			<StackElement
+				left="50%"
+				margin="auto"
+				sx={(theme) => ({
+					bottom: theme.spacing(8),
+					transform: "translateX(-50%)"
+				})}
+			>
+				<PlaybackControls
+					rendererController={rendererController}
+					showMenu={showMenu}
+					onToggleMenu={onToggleMenu}
+				/>
+			</StackElement>
+		</>
 	);
 };
 

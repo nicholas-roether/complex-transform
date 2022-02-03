@@ -27,26 +27,23 @@ const TransformationView = ({
 	});
 	return (
 		<Stack width={width} height={height}>
-			<ResponsiveViewport viewport={viewport}>
-				<Stack width={width} height={height}>
-					<WebGLCanvas width={width} height={height}>
-						{(gl) => new TransformRenderer(rendererController, gl)}
-					</WebGLCanvas>
-					<Ctx2DCanvas width={width} height={height}>
-						{(ctx) => new AxisRenderer(rendererController, ctx)}
-					</Ctx2DCanvas>
-				</Stack>
-			</ResponsiveViewport>
-			<StackElement
-				left="50%"
-				margin="auto"
-				sx={(theme) => ({
-					bottom: theme.spacing(8),
-					transform: "translateX(-50%)"
-				})}
-			>
-				<AnimationControls rendererController={rendererController} />
+			<StackElement>
+				<ResponsiveViewport viewport={viewport}>
+					<Stack width={width} height={height}>
+						<StackElement>
+							<WebGLCanvas width={width} height={height}>
+								{(gl) => new TransformRenderer(rendererController, gl)}
+							</WebGLCanvas>
+						</StackElement>
+						<StackElement>
+							<Ctx2DCanvas width={width} height={height}>
+								{(ctx) => new AxisRenderer(rendererController, ctx)}
+							</Ctx2DCanvas>
+						</StackElement>
+					</Stack>
+				</ResponsiveViewport>
 			</StackElement>
+			<AnimationControls rendererController={rendererController} />
 		</Stack>
 	);
 };

@@ -1,7 +1,7 @@
 import styled from "@emotion/styled";
 import { Box } from "@mui/material";
 import { BoxProps } from "@mui/system";
-import React, { Children, PropsWithChildren } from "react";
+import React, { PropsWithChildren } from "react";
 
 interface StackProps {
 	width: number | string;
@@ -34,19 +34,7 @@ const StackElement = ({
 );
 
 const Stack = ({ width, height, children }: PropsWithChildren<StackProps>) => {
-	return (
-		<StackWrapper style={{ width, height }}>
-			{Children.map(children, (child) =>
-				React.isValidElement(child) && child?.type === StackElement ? (
-					child
-				) : (
-					<StackElement top="0" left="0">
-						{child}
-					</StackElement>
-				)
-			)}
-		</StackWrapper>
-	);
+	return <StackWrapper style={{ width, height }}>{children}</StackWrapper>;
 };
 
 export default Stack;
