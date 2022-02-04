@@ -67,7 +67,6 @@ const ResponsiveViewport = ({
 					evt.changedTouches,
 					touchesRef.current
 				);
-				console.log(evt.changedTouches.length, touchesRef.current.length);
 				viewport.translate(viewport.frameToCanvasSpace(gestures.translation));
 				viewport.zoom(
 					gestures.zoom,

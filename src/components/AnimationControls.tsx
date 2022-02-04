@@ -149,7 +149,6 @@ const PlaybackControls = ({
 
 const AnimationMenu = ({ rendererController }: AnimationMenuProps) => {
 	const [axesShown, setAxesShown] = useState(rendererController.axesShown);
-	console.log(axesShown);
 	rendererController.onChange("settings", () => {
 		setAxesShown(rendererController.axesShown);
 	});
