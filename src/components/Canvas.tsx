@@ -14,13 +14,12 @@ const BlockCanvas = styled.canvas`
 
 const Canvas = ({ width, height, children: createRenderer }: CanvasProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const renderer = useRef<Renderer | null>(null);
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return console.error("WebGL canvas not found");
-		renderer.current?.stop();
-		renderer.current = createRenderer?.(canvasRef.current) ?? null;
-		renderer.current?.run();
+		const renderer = createRenderer?.(canvasRef.current) ?? null;
+		renderer?.run();
+		return () => renderer?.stop();
 	}, [canvasRef, createRenderer]);
 
 	return (

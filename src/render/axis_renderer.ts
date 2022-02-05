@@ -1,3 +1,4 @@
+import { ChangeCallbackID } from "../utils/change_notifier";
 import { Point } from "../utils/geometry";
 import Ctx2DRenderer from "./ctx_2d_renderer";
 import RendererController from "./renderer_controller";
@@ -16,6 +17,8 @@ class AxisRenderer extends Ctx2DRenderer {
 	private readonly tickLength;
 	private readonly tickLabelDist;
 
+	private controllerListener?: ChangeCallbackID;
+
 	constructor(
 		rendererController: RendererController,
 		ctx: CanvasRenderingContext2D
@@ -25,7 +28,19 @@ class AxisRenderer extends Ctx2DRenderer {
 		this.numSubdivs = 5 / this.viewport.pixelDensity;
 		this.tickLength = 5 * this.viewport.pixelDensity;
 		this.tickLabelDist = 20 * this.viewport.pixelDensity;
-		rendererController.onChange("axes", () => this.update());
+	}
+
+	public run(): void {
+		this.controllerListener = this.rendererController.onChange("axes", () =>
+			this.update()
+		);
+		super.run();
+	}
+
+	public stop(): void {
+		if (this.controllerListener)
+			this.rendererController.unregisterCallback(this.controllerListener);
+		super.stop();
 	}
 
 	private getTickSpacing(): number {

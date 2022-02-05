@@ -3,6 +3,7 @@ import lineVert from "./shaders/line.vert.glsl";
 import lineFrag from "./shaders/line.frag.glsl";
 import { Point } from "../utils/geometry";
 import RendererController from "./renderer_controller";
+import { ChangeCallbackID } from "../utils/change_notifier";
 
 interface BufferSectionMapping {
 	color: [r: number, g: number, b: number];
@@ -38,9 +39,8 @@ class TransformRenderer extends WebGLRenderer {
 
 	private readonly lineShaderProgram: WebGLProgram;
 	private color: [r: number, g: number, b: number] = [0, 0, 0];
-	// private finished = false;
-	// private time: number = 0;
 	private readonly controller: RendererController;
+	private controllerListener?: ChangeCallbackID;
 
 	constructor(
 		rendererController: RendererController,
@@ -48,7 +48,6 @@ class TransformRenderer extends WebGLRenderer {
 	) {
 		super(rendererController.viewport, gl);
 		this.controller = rendererController;
-		rendererController.onChange("transform", () => this.update());
 		this.lineShaderProgram = this.compileProgram([
 			{ type: this.gl.VERTEX_SHADER, source: lineVert },
 			{ type: this.gl.FRAGMENT_SHADER, source: lineFrag }
@@ -72,6 +71,19 @@ class TransformRenderer extends WebGLRenderer {
 			TransformRenderer.vertexBuffer,
 			this.gl.STATIC_DRAW
 		);
+	}
+
+	public run(): void {
+		this.controllerListener = this.controller.onChange("transform", () =>
+			this.update()
+		);
+		super.run();
+	}
+
+	public stop(): void {
+		if (this.controllerListener)
+			this.controller.unregisterCallback(this.controllerListener);
+		super.stop();
 	}
 
 	protected draw(): void {

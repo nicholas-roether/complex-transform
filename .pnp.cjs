@@ -49,6 +49,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/react", "npm:17.0.38"],
             ["@types/react-dom", "npm:17.0.11"],
             ["@types/testing-library__jest-dom", "npm:5.14.2"],
+            ["@types/uuid", "npm:8.3.4"],
             ["@typescript-eslint/eslint-plugin", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:5.9.1"],
             ["@typescript-eslint/parser", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:5.9.1"],
             ["eslint", "npm:8.6.0"],
@@ -65,6 +66,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["react-scripts", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:5.0.0"],
             ["ts-jest", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:27.1.2"],
             ["typescript", "patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=493e53"],
+            ["uuid", "npm:8.3.2"],
             ["web-vitals", "npm:2.1.3"]
           ],
           "linkType": "SOFT",
@@ -4762,6 +4764,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD",
         }]
       ]],
+      ["@types/uuid", [
+        ["npm:8.3.4", {
+          "packageLocation": "./.yarn/cache/@types-uuid-npm-8.3.4-7547f4402c-6f11f3ff70.zip/node_modules/@types/uuid/",
+          "packageDependencies": [
+            ["@types/uuid", "npm:8.3.4"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
       ["@types/ws", [
         ["npm:8.2.2", {
           "packageLocation": "./.yarn/cache/@types-ws-npm-8.2.2-6ddc1e1158-308957864b.zip/node_modules/@types/ws/",
@@ -6827,6 +6838,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/react", "npm:17.0.38"],
             ["@types/react-dom", "npm:17.0.11"],
             ["@types/testing-library__jest-dom", "npm:5.14.2"],
+            ["@types/uuid", "npm:8.3.4"],
             ["@typescript-eslint/eslint-plugin", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:5.9.1"],
             ["@typescript-eslint/parser", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:5.9.1"],
             ["eslint", "npm:8.6.0"],
@@ -6843,6 +6855,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["react-scripts", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:5.0.0"],
             ["ts-jest", "virtual:2be2953785acf82873a3443ac6d5f0b47f9999715c9baa9a2361e009f65ca24cea8edd5634da97f2f2090e86a931049257e8528c7c2ce7a717f1a025e4ca56c7#npm:27.1.2"],
             ["typescript", "patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=493e53"],
+            ["uuid", "npm:8.3.2"],
             ["web-vitals", "npm:2.1.3"]
           ],
           "linkType": "SOFT",

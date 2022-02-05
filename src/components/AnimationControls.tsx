@@ -24,8 +24,9 @@ import {
 	Theme,
 	Typography
 } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import RendererController from "../render/renderer_controller";
+import { useChangeNotification } from "../utils/hooks";
 import { StackElement } from "./Stack";
 
 interface AnimationControlsProps {
@@ -61,12 +62,17 @@ const PlaybackControls = ({
 	const [playing, setPlaying] = useState(rendererController.playing);
 	const [time, setTime] = useState(rendererController.animationTime);
 
-	useEffect(() => {
-		rendererController.onChange("player", () => {
-			setPlaying(rendererController.playing);
-			setTime(rendererController.animationTime);
-		});
-	}, [rendererController, time]);
+	// useEffect(() => {
+	// 	rendererController.onChange("player", () => {
+	// 		setPlaying(rendererController.playing);
+	// 		setTime(rendererController.animationTime);
+	// 	});
+	// }, [rendererController, time]);
+
+	useChangeNotification(rendererController, "player", () => {
+		setPlaying(rendererController.playing);
+		setTime(rendererController.animationTime);
+	});
 
 	const onPlayClick = useCallback(() => {
 		if (playing) rendererController.pause();
@@ -149,7 +155,10 @@ const PlaybackControls = ({
 
 const AnimationMenu = ({ rendererController }: AnimationMenuProps) => {
 	const [axesShown, setAxesShown] = useState(rendererController.axesShown);
-	rendererController.onChange("settings", () => {
+	// rendererController.onChange("settings", () => {
+	// 	setAxesShown(rendererController.axesShown);
+	// });
+	useChangeNotification(rendererController, "settings", () => {
 		setAxesShown(rendererController.axesShown);
 	});
 	return (
@@ -187,7 +196,7 @@ const AnimationControls = ({ rendererController }: AnimationControlsProps) => {
 				right="calc(50% - min(400px, 47.5vw))"
 				sx={(theme) => ({ bottom: theme.spacing(16) })}
 			>
-				<Grow in={showMenu} mountOnEnter unmountOnExit>
+				<Grow in={showMenu}>
 					<Box>
 						<AnimationMenu rendererController={rendererController} />
 					</Box>
