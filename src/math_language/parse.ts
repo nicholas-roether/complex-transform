@@ -1,23 +1,24 @@
+import { ElementUnion, isElementUnionType } from "../utils/types";
 import { ExpressionNode, ExpressionTree } from "./expression";
 import { Token, TokenType } from "./lex";
 
-type Operator = "+" | "-" | "*" | "/" | "^";
+const operators = ["+", "-", "*", "/", "^"] as const;
 
-const operators: string[] = ["+", "-", "*", "/", "^"];
+type Operator = ElementUnion<typeof operators>;
 
 const operatorPrecedence: Record<Operator, number> = {
 	"+": 0,
-	"-": 0,
-	"*": 1,
-	"/": 1,
-	"^": 2
+	"-": 1,
+	"*": 2,
+	"/": 3,
+	"^": 4
 };
 
 const functionPrecedence =
 	Object.values(operatorPrecedence).sort((a, b) => b - a)[0] + 1;
 
 function isKnownOperator(operator: string): operator is Operator {
-	return operators.includes(operator);
+	return isElementUnionType(operators, operator);
 }
 
 function getOperatorPrecendence(operator: string): number {
@@ -32,7 +33,7 @@ enum TreeParseState {
 	EXPECT_ARGUMENT_LIST
 }
 
-function parseTokensToTree(tokens: Token[]): ExpressionTree {
+function parse(tokens: Token[]): ExpressionTree {
 	const tree = new ExpressionTree();
 	let state: TreeParseState = TreeParseState.EXPECT_VALUE;
 	let rootStack: ExpressionNode[] = [tree.root];
@@ -94,9 +95,9 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 		return result;
 	}
 
-	function insertValueNode(string: string): void {
+	function insertValueNode(type: string, string: string): void {
 		climbToNode((node) => node.name === "operation");
-		const valueNode = tree.createNode("value");
+		const valueNode = tree.createNode(type);
 		valueNode.str = string;
 		currentNode.appendChild(valueNode);
 		currentNode = valueNode;
@@ -122,10 +123,16 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 
 	for (const token of tokens) {
 		switch (token.type) {
-			case TokenType.VALUE:
+			case TokenType.NUMBER:
 				if (state !== TreeParseState.EXPECT_VALUE)
-					throw new Error("Unexpected value token.");
-				insertValueNode(token.string);
+					throw new Error("Unexpected number token.");
+				insertValueNode("number", token.string);
+				state = TreeParseState.AFTER_VALUE;
+				break;
+			case TokenType.SYMBOL:
+				if (state !== TreeParseState.EXPECT_VALUE)
+					throw new Error("Unexpected variable token.");
+				insertValueNode("symbol", token.string);
 				state = TreeParseState.AFTER_VALUE;
 				break;
 			case TokenType.OPERATOR:
@@ -178,4 +185,4 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 	return tree;
 }
 
-export { parseTokensToTree };
+export { parse };

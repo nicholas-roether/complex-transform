@@ -1,5 +1,6 @@
 enum TokenType {
-	VALUE,
+	NUMBER,
+	SYMBOL,
 	OPERATOR,
 	PARENTHESIS_OPEN,
 	PARENTHESIS_CLOSE,
@@ -60,9 +61,12 @@ function lex(str: string): Token[] {
 			switch (state) {
 				case LexState.NUMBER:
 				case LexState.DECIMAL_EXPANSION:
+					state = LexState.AFTER_VALUE;
+					pushToken(TokenType.NUMBER);
+					break;
 				case LexState.VARIABLE_OR_FUNCTION:
 					state = LexState.AFTER_VALUE;
-					pushToken(TokenType.VALUE);
+					pushToken(TokenType.SYMBOL);
 					break;
 				case LexState.AFTER_VALUE:
 				case LexState.EXPECT_VALUE:
@@ -73,7 +77,7 @@ function lex(str: string): Token[] {
 				case LexState.NUMBER:
 				case LexState.DECIMAL_EXPANSION:
 					parenthesisStack.push(TokenType.PARENTHESIS_CLOSE);
-					pushToken(TokenType.VALUE);
+					pushToken(TokenType.NUMBER);
 					pushToken(TokenType.OPERATOR); // Implicit multiplication (string = "")
 					token += char;
 					pushToken(TokenType.PARENTHESIS_OPEN);
@@ -103,10 +107,14 @@ function lex(str: string): Token[] {
 			switch (state) {
 				case LexState.NUMBER:
 				case LexState.DECIMAL_EXPANSION:
-				case LexState.VARIABLE_OR_FUNCTION:
-					pushToken(TokenType.VALUE);
+					pushToken(TokenType.NUMBER);
 					token += char;
 					// pop will never return undefined because we check that parenthesisStack is never empty.
+					pushToken(parenthesisStack.pop() as ClosingParenthesis);
+					break;
+				case LexState.VARIABLE_OR_FUNCTION:
+					pushToken(TokenType.SYMBOL);
+					token += char;
 					pushToken(parenthesisStack.pop() as ClosingParenthesis);
 					break;
 				case LexState.AFTER_VALUE:
@@ -144,8 +152,7 @@ function lex(str: string): Token[] {
 					case LexState.NUMBER:
 					case LexState.DECIMAL_EXPANSION:
 					case LexState.VARIABLE_OR_FUNCTION:
-						// If the previous token was a number or variable, it is now finished.
-						pushToken(TokenType.VALUE);
+						pushToken(TokenType.SYMBOL);
 						break;
 					case LexState.AFTER_VALUE:
 						// This means the previous value token is already finished.
@@ -175,12 +182,12 @@ function lex(str: string): Token[] {
 					if (numberRegex.test(char)) token += char;
 					else if (variableStartRegex.test(char)) {
 						state = LexState.VARIABLE_OR_FUNCTION;
-						pushToken(TokenType.VALUE);
+						pushToken(TokenType.NUMBER);
 						pushToken(TokenType.OPERATOR); // Implicit multiplication
 						token += char;
 					} else if (operatorRegex.test(char)) {
 						state = LexState.EXPECT_VALUE;
-						pushToken(TokenType.VALUE);
+						pushToken(TokenType.NUMBER);
 						token += char;
 						pushToken(TokenType.OPERATOR);
 					} else {
@@ -195,7 +202,7 @@ function lex(str: string): Token[] {
 					if (variableRegex.test(char)) token += char;
 					else if (operatorRegex.test(char)) {
 						state = LexState.EXPECT_VALUE;
-						pushToken(TokenType.VALUE);
+						pushToken(TokenType.SYMBOL);
 						token += char;
 						pushToken(TokenType.OPERATOR);
 					} else {
@@ -244,8 +251,10 @@ function lex(str: string): Token[] {
 	switch (state as LexState) {
 		case LexState.NUMBER:
 		case LexState.DECIMAL_EXPANSION:
+			pushToken(TokenType.NUMBER);
+			break;
 		case LexState.VARIABLE_OR_FUNCTION:
-			pushToken(TokenType.VALUE);
+			pushToken(TokenType.SYMBOL);
 			break;
 		case LexState.EXPECT_VALUE:
 			throw new LexingError(
