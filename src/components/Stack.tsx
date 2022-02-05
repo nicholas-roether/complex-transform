@@ -14,14 +14,6 @@ const StackWrapper = styled.div`
 	left: 0;
 `;
 
-// const StackElement = styled.div`
-// 	position: absolute;
-// 	top: 0;
-// 	left: 0;
-// 	width: 100%;
-// 	height: 100%;
-// `;
-
 interface StackElementProps extends BoxProps {}
 
 const StackElement = ({

@@ -104,16 +104,6 @@ class TransformRenderer extends WebGLRenderer {
 		this.gl.useProgram(null);
 	}
 
-	protected frame(dt: number) {
-		// if (this.finished) return;
-		// this.time += dt / 5000;
-		// if (this.time > 1) {
-		// 	this.time = 1;
-		// 	this.finished = true;
-		// }
-		// this.update();
-	}
-
 	private drawLines(start: number, length: number) {
 		for (let i = 0; i < length; i += TransformRenderer.LINE_LENGTH) {
 			this.drawLine(start + i, TransformRenderer.LINE_LENGTH);

@@ -80,8 +80,6 @@ class Viewport extends ChangeNotifier {
 			.add(this.coordTranslation.x, -this.coordTranslation.y)
 			.scale(this.coordToFrameFactor)
 			.add(this.width / 2, this.height / 2);
-
-		// TODO invert y axis canvas <--> coord!
 	}
 
 	public coordToNormalizedSpace(pos: Point): Point;
@@ -183,51 +181,6 @@ class Viewport extends ChangeNotifier {
 		const j = this.coordToNormalizedSpace(0, -1);
 		return new Matrix(i, j);
 	}
-
-	// public get aspectRatio() {
-	// 	return this.width / this.height;
-	// }
-
-	// public get coordWidth() {
-	// 	const widthFactor = this.getSideFactors()[0];
-	// 	return (this.width * Viewport.BASE_SCALE * this.scale) / widthFactor;
-	// }
-
-	// public get coordHeight() {
-	// 	const heightFactor = this.getSideFactors()[1];
-	// 	return (this.height * Viewport.BASE_SCALE * this.scale) / heightFactor;
-	// }
-
-	// public get screenspaceMatrix(): Matrix {
-	// 	const [widthFactor, heightFactor] = this.getSideFactors();
-	// 	return new Matrix(
-	// 		this.scale * Viewport.BASE_SCALE * widthFactor,
-	// 		0,
-	// 		0,
-	// 		this.scale * Viewport.BASE_SCALE * heightFactor
-	// 	);
-	// }
-
-	// public get translationVector(): Point {
-	// 	return new Point(
-	// 		(2 * this.translation.x) / this.width,
-	// 		(-2 * this.translation.y) / this.height
-	// 	);
-	// }
-
-	// private getSideFactors(): [number, number] {
-	// 	let widthFactor = 1 / this.aspectRatio;
-	// 	let heightFactor = 1;
-	// 	if (this.height > this.width) {
-	// 		heightFactor = this.aspectRatio;
-	// 		widthFactor = 1;
-	// 	}
-	// 	return [widthFactor, heightFactor];
-	// }
-
-	// private get smallSideLength() {
-	// 	return this.width > this.height ? this.width : this.height;
-	// }
 }
 
 export default Viewport;
