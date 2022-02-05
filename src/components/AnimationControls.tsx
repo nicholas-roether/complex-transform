@@ -62,13 +62,6 @@ const PlaybackControls = ({
 	const [playing, setPlaying] = useState(rendererController.playing);
 	const [time, setTime] = useState(rendererController.animationTime);
 
-	// useEffect(() => {
-	// 	rendererController.onChange("player", () => {
-	// 		setPlaying(rendererController.playing);
-	// 		setTime(rendererController.animationTime);
-	// 	});
-	// }, [rendererController, time]);
-
 	useChangeNotification(rendererController, "player", () => {
 		setPlaying(rendererController.playing);
 		setTime(rendererController.animationTime);
@@ -155,9 +148,6 @@ const PlaybackControls = ({
 
 const AnimationMenu = ({ rendererController }: AnimationMenuProps) => {
 	const [axesShown, setAxesShown] = useState(rendererController.axesShown);
-	// rendererController.onChange("settings", () => {
-	// 	setAxesShown(rendererController.axesShown);
-	// });
 	useChangeNotification(rendererController, "settings", () => {
 		setAxesShown(rendererController.axesShown);
 	});
@@ -196,7 +186,7 @@ const AnimationControls = ({ rendererController }: AnimationControlsProps) => {
 				right="calc(50% - min(400px, 47.5vw))"
 				sx={(theme) => ({ bottom: theme.spacing(16) })}
 			>
-				<Grow in={showMenu}>
+				<Grow in={showMenu} mountOnEnter unmountOnExit>
 					<Box>
 						<AnimationMenu rendererController={rendererController} />
 					</Box>
