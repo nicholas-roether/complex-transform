@@ -1,6 +1,6 @@
 import WebGLRenderer from "./webgl_renderer";
-import lineVert from "./shaders/line.vert.glsl";
-import lineFrag from "./shaders/line.frag.glsl";
+import lineVert from "./shaders/line-vert.glsl";
+import lineFrag from "./shaders/line-frag.glsl";
 import { Point } from "../utils/geometry";
 import RendererController from "./renderer_controller";
 import { ChangeCallbackID } from "../utils/change_notifier";
