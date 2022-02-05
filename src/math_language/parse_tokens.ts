@@ -1,111 +1,14 @@
+import { ExpressionNode, ExpressionTree } from "./expression";
 import { Token, TokenType } from "./lex";
 
-class ExpressionTreeNode {
-	public readonly tree: ExpressionTree;
-	public readonly name: string;
-	public readonly attributes: Map<string, string> = new Map();
-	private _parent?: ExpressionTreeNode;
-	private _children: ExpressionTreeNode[] = [];
+type Operator = "+" | "-" | "*" | "/" | "^";
 
-	public get children(): ExpressionTreeNode[] {
-		return this._children;
-	}
-
-	constructor(tree: ExpressionTree, name: string) {
-		this.tree = tree;
-		this.name = name;
-	}
-
-	public get parent(): ExpressionTreeNode | undefined {
-		return this._parent;
-	}
-
-	public appendChild(node: ExpressionTreeNode) {
-		this.children.push(node);
-		node._parent = this;
-	}
-
-	public prependChild(node: ExpressionTreeNode) {
-		this.children.unshift(node);
-		node._parent = this;
-	}
-
-	public insertAbove(node: ExpressionTreeNode) {
-		const parent = this.parent;
-		if (!parent) return;
-		parent.removeChild(this);
-		node.appendChild(this);
-		parent.appendChild(node);
-	}
-
-	public removeChild(node: ExpressionTreeNode) {
-		this.children.splice(this.children.indexOf(node), 1);
-		node._parent = undefined;
-	}
-
-	public setAttribute(name: string, value: string) {
-		this.attributes.set(name, value);
-	}
-
-	public getAttribute(name: string): string | undefined {
-		return this.attributes.get(name);
-	}
-
-	public deleteAttribute(name: string): void {
-		this.attributes.delete(name);
-	}
-}
-
-class ExpressionTree {
-	public readonly root = this.createNode("_root");
-
-	public createNode(name: string) {
-		return new ExpressionTreeNode(this, name);
-	}
-
-	public toString(): string {
-		function attributesToString(attributes: Map<string, string>): string {
-			let attribStrs: string[] = [];
-			for (const key of attributes.keys()) {
-				const value = attributes.get(key);
-				let str = "";
-				if (value !== undefined) str += key;
-				if (value !== "") str += `="${value}"`;
-				attribStrs.push(str);
-			}
-			return attribStrs.join(" ");
-		}
-
-		function nodeToString(node: ExpressionTreeNode, indentation = 0): string {
-			let openingTagContent = node.name;
-			if (node.attributes.size > 0)
-				openingTagContent += " " + attributesToString(node.attributes);
-			const indentationStr = "   ".repeat(indentation);
-			if (node.children.length === 0)
-				return `${indentationStr}<${openingTagContent} />`;
-			return (
-				indentationStr +
-				`<${openingTagContent}>\n` +
-				node.children
-					.map((child) => nodeToString(child, indentation + 1))
-					.join("\n") +
-				`\n${indentationStr}</${node.name}>`
-			);
-		}
-
-		return nodeToString(this.root);
-	}
-}
-
-type Operator = "+" | "-" | "*" | "" | "/" | "^";
-
-const operators: string[] = ["+", "-", "*", "", "/", "^"];
+const operators: string[] = ["+", "-", "*", "/", "^"];
 
 const operatorPrecedence: Record<Operator, number> = {
 	"+": 0,
 	"-": 0,
 	"*": 1,
-	"": 1,
 	"/": 1,
 	"^": 2
 };
@@ -132,15 +35,15 @@ enum TreeParseState {
 function parseTokensToTree(tokens: Token[]): ExpressionTree {
 	const tree = new ExpressionTree();
 	let state: TreeParseState = TreeParseState.EXPECT_VALUE;
-	let rootStack: ExpressionTreeNode[] = [tree.root];
-	let functionStack: ExpressionTreeNode[] = [];
+	let rootStack: ExpressionNode[] = [tree.root];
+	let functionStack: ExpressionNode[] = [];
 
 	const getCurrentRoot = () => rootStack[rootStack.length - 1];
 	const getCurrentFunction = () => functionStack[functionStack.length - 1];
 
 	let currentNode = getCurrentRoot();
 
-	function climbToNode(callback: (node: ExpressionTreeNode) => boolean) {
+	function climbToNode(callback: (node: ExpressionNode) => boolean) {
 		if (currentNode === getCurrentRoot()) return;
 		while (!callback(currentNode) && currentNode.parent) {
 			if (currentNode.parent === getCurrentRoot()) break;
@@ -157,9 +60,7 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 		if (rootStack.length === 0) rootStack = [tree.root];
 	}
 
-	function findParentOperationNodes(
-		node: ExpressionTreeNode
-	): ExpressionTreeNode[] {
+	function findParentOperationNodes(node: ExpressionNode): ExpressionNode[] {
 		const operations = [];
 		if (node === getCurrentRoot()) return [];
 		if (node.name === "operation") operations.push(node);
@@ -167,7 +68,7 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 		return operations;
 	}
 
-	function getOperationPrecedence(node: ExpressionTreeNode): number {
+	function getOperationPrecedence(node: ExpressionNode): number {
 		if (node.name !== "operation")
 			throw new Error("Non-operation nodes do not have precedence");
 		const precedenceAttr = node.getAttribute("precedence");
@@ -175,9 +76,9 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 		return 0;
 	}
 
-	function getHighestAbovePrecedence(precedence: number): ExpressionTreeNode {
+	function getHighestAbovePrecedence(precedence: number): ExpressionNode {
 		const parentOperations = findParentOperationNodes(currentNode);
-		let result: ExpressionTreeNode = currentNode;
+		let result: ExpressionNode = currentNode;
 		while (
 			parentOperations.length > 0 &&
 			getOperationPrecedence(parentOperations[0]) > precedence
@@ -196,7 +97,7 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 	function insertValueNode(string: string): void {
 		climbToNode((node) => node.name === "operation");
 		const valueNode = tree.createNode("value");
-		valueNode.setAttribute("str", string);
+		valueNode.str = string;
 		currentNode.appendChild(valueNode);
 		currentNode = valueNode;
 	}
@@ -204,7 +105,7 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 	function insertOperationNode(string: string, precedence: number): void {
 		const insertionPoint = getHighestAbovePrecedence(precedence);
 		const operationNode = tree.createNode("operation");
-		operationNode.setAttribute("str", string);
+		operationNode.str = string;
 		operationNode.setAttribute("precedence", precedence.toString());
 		insertionPoint.insertAbove(operationNode);
 		currentNode = operationNode;
@@ -213,7 +114,7 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 	function insertFunctionNode(string: string): void {
 		const insertionPoint = getHighestAbovePrecedence(functionPrecedence);
 		const operationNode = tree.createNode("operation");
-		operationNode.setAttribute("str", string);
+		operationNode.str = string;
 		operationNode.setAttribute("precedence", functionPrecedence.toString());
 		insertionPoint.appendChild(operationNode);
 		currentNode = operationNode;
@@ -230,8 +131,9 @@ function parseTokensToTree(tokens: Token[]): ExpressionTree {
 			case TokenType.OPERATOR:
 				if (state !== TreeParseState.AFTER_VALUE)
 					throw new Error("Unexpected operator token.");
-				const precedence = getOperatorPrecendence(token.string);
-				insertOperationNode(token.string, precedence);
+				const operator = token.string === "" ? "*" : token.string;
+				const precedence = getOperatorPrecendence(operator);
+				insertOperationNode(operator, precedence);
 				state = TreeParseState.EXPECT_VALUE;
 				break;
 			case TokenType.FUNCTION_NAME:
