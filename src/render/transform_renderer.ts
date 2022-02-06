@@ -1,5 +1,5 @@
 import WebGLRenderer from "./webgl_renderer";
-import lineVert from "./shaders/line-vert.glsl";
+import lineVert from "./shaders/line-vert.template.glsl";
 import lineFrag from "./shaders/line-frag.glsl";
 import { Point } from "../utils/geometry";
 import RendererController from "./renderer_controller";
@@ -18,29 +18,40 @@ interface GridVertexMesh {
 class TransformRenderer extends WebGLRenderer {
 	private static readonly GRID_SIZE = 60;
 	private static readonly SUBDIVISION = 5;
-	private static readonly SEGMENTS = 80;
-	private static gridVertexMesh: GridVertexMesh = this.generateGridVertices();
-	private static vertexBuffer = this.gridVertexMesh.buffer;
+	private static readonly SEGMENTS = 700;
 	private static LINE_LENGTH = this.GRID_SIZE * this.SEGMENTS + 1;
-	private static bufferSectionMappings: BufferSectionMapping[] = [
-		{
-			color: [0.2, 0.2, 0.2],
-			length: this.gridVertexMesh.segmentLengths[0] / 2
-		},
-		{
-			color: [0.3, 0.8, 1.0],
-			length: this.gridVertexMesh.segmentLengths[1] / 2
-		},
-		{
-			color: [0.3, 0.4, 1.0],
-			length: this.gridVertexMesh.segmentLengths[2] / 2
-		}
-	];
-
+	private static _gridVertexMesh?: GridVertexMesh;
+	private static _bufferSectionMappings?: BufferSectionMapping[];
 	private readonly lineShaderProgram: WebGLProgram;
 	private color: [r: number, g: number, b: number] = [0, 0, 0];
 	private readonly controller: RendererController;
 	private controllerListener?: ChangeCallbackID;
+
+	private get gridVertexMesh(): GridVertexMesh {
+		if (!TransformRenderer._gridVertexMesh)
+			TransformRenderer.generateGridVertices();
+		if (!TransformRenderer._gridVertexMesh)
+			throw new Error("Grid vertex generation failed due to unknown reasons.");
+		return TransformRenderer._gridVertexMesh;
+	}
+
+	private get vertexBuffer(): Float32Array {
+		return this.gridVertexMesh.buffer;
+	}
+
+	private get bufferSectionMappings() {
+		if (!TransformRenderer._bufferSectionMappings) {
+			TransformRenderer.generateBufferSectionMappings(
+				this.gridVertexMesh.segmentLengths
+			);
+		}
+		if (!TransformRenderer._bufferSectionMappings) {
+			throw new Error(
+				"Buffer section mapping generation failed due to unknown reasons."
+			);
+		}
+		return TransformRenderer._bufferSectionMappings;
+	}
 
 	constructor(
 		rendererController: RendererController,
@@ -68,7 +79,7 @@ class TransformRenderer extends WebGLRenderer {
 		});
 		this.setAttributeBuffer(
 			"aVertexPosition",
-			TransformRenderer.vertexBuffer,
+			this.vertexBuffer,
 			this.gl.STATIC_DRAW
 		);
 	}
@@ -93,7 +104,7 @@ class TransformRenderer extends WebGLRenderer {
 		this.setVertexAttributes(this.lineShaderProgram);
 
 		let position = 0;
-		for (const mapping of TransformRenderer.bufferSectionMappings) {
+		for (const mapping of this.bufferSectionMappings) {
 			this.color = mapping.color;
 			this.setUniforms(this.lineShaderProgram, "uColor");
 			this.drawLines(position, mapping.length);
@@ -114,7 +125,24 @@ class TransformRenderer extends WebGLRenderer {
 		this.gl.drawArrays(this.gl.LINE_STRIP, start, length);
 	}
 
-	private static generateGridVertices(): GridVertexMesh {
+	private static generateBufferSectionMappings(segmentLengths: number[]): void {
+		this._bufferSectionMappings = [
+			{
+				color: [0.2, 0.2, 0.2],
+				length: segmentLengths[0] / 2
+			},
+			{
+				color: [0.3, 0.8, 1.0],
+				length: segmentLengths[1] / 2
+			},
+			{
+				color: [0.3, 0.4, 1.0],
+				length: segmentLengths[2] / 2
+			}
+		];
+	}
+
+	private static generateGridVertices(): void {
 		const verticalLine = (x: number) =>
 			this.generateSegmentedLine(
 				new Point(x, -halfSize),
@@ -129,13 +157,15 @@ class TransformRenderer extends WebGLRenderer {
 			);
 
 		const halfSize = this.GRID_SIZE / 2;
-		const axisVertices: number[] = [...horizontalLine(0), ...verticalLine(0)];
+		const axisVertices: number[] = [];
+		for (const vertex of horizontalLine(0)) axisVertices.push(vertex);
+		for (const vertex of verticalLine(0)) axisVertices.push(vertex);
 
 		const mainVertices: number[] = [];
 		for (let i = -halfSize; i <= halfSize; i++) {
 			if (i === 0) continue;
-			mainVertices.push(...horizontalLine(i));
-			mainVertices.push(...verticalLine(i));
+			for (const vertex of horizontalLine(i)) mainVertices.push(vertex);
+			for (const vertex of verticalLine(i)) mainVertices.push(vertex);
 		}
 
 		const subVertices: number[] = [];
@@ -143,16 +173,17 @@ class TransformRenderer extends WebGLRenderer {
 		for (let i = -halfSize; i <= halfSize; i += subStep) {
 			// Account for floating point errors
 			if (Math.abs(i % 1) < subStep / 2) continue;
-			subVertices.push(...horizontalLine(i));
-			subVertices.push(...verticalLine(i));
+			for (const vertex of horizontalLine(i)) subVertices.push(vertex);
+			for (const vertex of verticalLine(i)) subVertices.push(vertex);
 		}
 
-		return {
-			buffer: new Float32Array([
-				...subVertices,
-				...mainVertices,
-				...axisVertices
-			]),
+		const bufferArray: number[] = [];
+		for (const vertex of subVertices) bufferArray.push(vertex);
+		for (const vertex of mainVertices) bufferArray.push(vertex);
+		for (const vertex of axisVertices) bufferArray.push(vertex);
+
+		this._gridVertexMesh = {
+			buffer: new Float32Array(bufferArray),
 			segmentLengths: [
 				subVertices.length,
 				mainVertices.length,

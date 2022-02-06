@@ -24,7 +24,15 @@ class ShaderCompilationError extends Error {
 		super(
 			`Failed to compile shader of type ${getShaderTypeName(type)}; ${errorLog}`
 		);
+		this.name = "ShaderCompilationError";
 		this.shaderType = type;
+	}
+}
+
+class ShaderLinkingError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ShaderLinkingError";
 	}
 }
 
@@ -136,7 +144,9 @@ abstract class WebGLRenderer extends Renderer {
 		if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
 			const errorLog = this.gl.getProgramInfoLog(program);
 			this.gl.deleteProgram(program);
-			throw new Error(`Failed to link shader program; ${errorLog}`);
+			throw new ShaderLinkingError(
+				`Failed to link shader program; ${errorLog}`
+			);
 		}
 
 		return program;
