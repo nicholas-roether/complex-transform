@@ -24,7 +24,8 @@ const functionNames = [
 	"abs",
 	"arg",
 	"Re",
-	"Im"
+	"Im",
+	"conj"
 ] as const;
 
 type FunctionName = ElementUnion<typeof functionNames>;
@@ -77,10 +78,22 @@ const symbolNames: Record<Symbol, string> = {
 	e: "CMPLX_E"
 };
 
+function createFunctionCall(functionName: string, ...args: string[]) {
+	return `${functionName}(${args.join(", ")})`;
+}
+
+function createNumber(num: string): string {
+	return createFunctionCall("complexNumber", num);
+}
+
 function generateGLSLForNode(node: ExpressionNode): string {
 	switch (node.name) {
 		case "number":
-			return node.str;
+			const float = Number.parseFloat(node.str);
+			const str = float.toLocaleString("fullwide", {
+				minimumFractionDigits: 1
+			});
+			return createNumber(str);
 		case "symbol":
 			if (!isSymbol(node.str)) throw new Error(`Unknown symbol "${node.str}".`);
 			return symbolNames[node.str];
@@ -99,10 +112,8 @@ function generateGLSLForNode(node: ExpressionNode): string {
 					`Expected ${numArgs} arguments for operation "${node.str}"; got ${node.children.length}.`
 				);
 			}
-			const argString = node.children
-				.map((child) => generateGLSLForNode(child))
-				.join(", ");
-			return `${functionName}(${argString})`;
+			const args = node.children.map((child) => generateGLSLForNode(child));
+			return createFunctionCall(functionName, ...args);
 		default:
 			throw new Error(
 				`Malformed expression tree: encountered tree node of unknown type ${node.name}`
