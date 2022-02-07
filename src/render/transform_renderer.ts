@@ -1,9 +1,13 @@
 import WebGLRenderer from "./webgl_renderer";
-import lineVert from "./shaders/line-vert.template.glsl";
+import lineVertTemplateStr from "./shaders/line-vert.template.glsl";
 import lineFrag from "./shaders/line-frag.glsl";
 import { Point } from "../utils/geometry";
 import RendererController from "./renderer_controller";
 import { ChangeCallbackID } from "../utils/change_notifier";
+import GLSLTemplate from "./glsl_template";
+import { transpileMathToGLSL } from "../math_language/transpile";
+
+const lineVertTemplate = new GLSLTemplate(lineVertTemplateStr);
 
 interface BufferSectionMapping {
 	color: [r: number, g: number, b: number];
@@ -18,7 +22,7 @@ interface GridVertexMesh {
 class TransformRenderer extends WebGLRenderer {
 	private static readonly GRID_SIZE = 60;
 	private static readonly SUBDIVISION = 5;
-	private static readonly SEGMENTS = 700;
+	private static readonly SEGMENTS = 200;
 	private static LINE_LENGTH = this.GRID_SIZE * this.SEGMENTS + 1;
 	private static _gridVertexMesh?: GridVertexMesh;
 	private static _bufferSectionMappings?: BufferSectionMapping[];
@@ -60,7 +64,12 @@ class TransformRenderer extends WebGLRenderer {
 		super(rendererController.viewport, gl);
 		this.controller = rendererController;
 		this.lineShaderProgram = this.compileProgram([
-			{ type: this.gl.VERTEX_SHADER, source: lineVert },
+			{
+				type: this.gl.VERTEX_SHADER,
+				source: lineVertTemplate.generate({
+					TRANSFORM_FUNCTION: transpileMathToGLSL("sqrt(z)")
+				})
+			},
 			{ type: this.gl.FRAGMENT_SHADER, source: lineFrag }
 		]);
 		this.pushUniform({
