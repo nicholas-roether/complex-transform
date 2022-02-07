@@ -17,12 +17,9 @@ interface ErrorPropertyDisplayProps {
 	fallback: string;
 }
 
-const ErrorText = styled("code")(({ theme }) => {
-	console.log(theme);
-	return {
-		color: theme.palette.error.main
-	};
-});
+const ErrorText = styled("code")(({ theme }) => ({
+	color: theme.palette.error.main
+}));
 
 const ErrorPropertyDisplay = ({
 	property,
@@ -31,7 +28,7 @@ const ErrorPropertyDisplay = ({
 }: ErrorPropertyDisplayProps) => {
 	if (!property) return <Typography gutterBottom>{fallback}</Typography>;
 	return (
-		<p>
+		<div>
 			<Typography variant="subtitle1" gutterBottom>
 				{title}
 			</Typography>
@@ -40,7 +37,7 @@ const ErrorPropertyDisplay = ({
 					<ErrorText>{property}</ErrorText>
 				</CardContent>
 			</Card>
-		</p>
+		</div>
 	);
 };
 
